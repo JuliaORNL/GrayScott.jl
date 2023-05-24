@@ -3,17 +3,17 @@ import MPI
 import ArgParse
 import ADIOS2
 
-function _epsilon(d::T)::Bool where {T <: Number}
+function _epsilon(d::T)::Bool where {T<:Number}
     return (d < 1.0e-20)
 end
 
 """
 Return 2 arrays pdf and bins of a 2D slice
 """
-function _compute_pdf(data::Array{T, 3}, shape, count, nbins, min::T,
-                      max::T) where {T}
-    pdf = Array{T, 2}(undef, nbins, count)
-    bins = Array{T, 1}(undef, nbins)
+function _compute_pdf(data::Array{T,3}, shape, count, nbins, min::T,
+    max::T) where {T}
+    pdf = Array{T,2}(undef, nbins, count)
+    bins = Array{T,1}(undef, nbins)
     bin_width = (max - min) / nbins
 
     for i in 1:nbins
@@ -49,7 +49,7 @@ function _compute_pdf(data::Array{T, 3}, shape, count, nbins, min::T,
 end
 
 function _parse_arguments(args)
-    s = ArgParse.ArgParseSettings(description = "gray-scott workflow pdf generator, Julia version")
+    s = ArgParse.ArgParseSettings(description="gray-scott workflow pdf generator, Julia version")
 
     #  @add_arg_table! s begin
     #       "--opt1"               # an option (will take an argument)
@@ -99,9 +99,9 @@ function _read_data_write_pdf(inputs, comm)
 
     if rank == 0
         println("PDF analysis reads from Simulation using engine type:  ",
-                ADIOS2.engine_type(reader_io))
+            ADIOS2.engine_type(reader_io))
         println("PDF analysis writes using engine type:  ",
-                ADIOS2.engine_type(writer_io))
+            ADIOS2.engine_type(writer_io))
     end
 
     # Engines for reading and writing
@@ -118,7 +118,7 @@ function _read_data_write_pdf(inputs, comm)
             # sleep in seconds, minimum is one milisecond = 0.001
             sleep(1)
             continue
-        else if read_status != ADIOS2.step_status_ok
+        elseif read_status != ADIOS2.step_status_ok
             break
         end
 
@@ -134,12 +134,12 @@ function _read_data_write_pdf(inputs, comm)
         start_z = count_z * rank
 
         # Last process needs to read all the rest
-        if rank == size-1
-            count_z = shape[3] - count_z * (size-1)
+        if rank == size - 1
+            count_z = shape[3] - count_z * (size - 1)
         end
 
         # missing set_selection
-        start = ( 0,0,start_z)
+        start = (0, 0, start_z)
         count = (shape[1], shape[2], count_z)
         ADIOS2.set_selection(var_U, start, count)
         ADIOS2.set_selection(var_V, start, count)
