@@ -1,8 +1,13 @@
 #!/bin/bash
 
+# Run this file as `source config_ascent.sh`
+
 # Replace these 3 entries
+# Replace if using a different account than trn017
 PROJ_DIR=/gpfs/wolf/proj-shared/trn017/$USER
+# JULIA_DEPOT_PATH is where Julia packages would be installed other than ~/.julia (default)
 export JULIA_DEPOT_PATH=$PROJ_DIR/julia_depot
+# Replace with GrayScott.jl cloned location
 GS_DIR=$PROJ_DIR/GrayScott.jl
 
 # remove existing generated Manifest.toml
