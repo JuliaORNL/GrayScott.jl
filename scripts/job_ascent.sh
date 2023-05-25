@@ -12,8 +12,10 @@
 
 # launch this file with bsub `$ bsub job_ascent.sh` 
 # in a directory containing a settings-files.json file
+# example file provided in GrayScott.jl/examples/settings-files.json
 
 date
+# Modify for your account other than csc383/user
 GS_DIR=/gpfs/wolf/proj-shared/trn017/$USER/GrayScott.jl
 GS_EXE=$GS_DIR/gray-scott.jl
 
