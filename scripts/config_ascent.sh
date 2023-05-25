@@ -20,6 +20,7 @@ module load gcc/11.2.0
 # failure with 11.5.2
 module load cuda/11.4.2 
 module load adios2/2.8.1
+module load julia/1.9.0
 
 # Required to enable underlying ADIOS2 library from loaded module
 # https://eschnett.github.io/ADIOS2.jl/dev/#Using-a-custom-or-system-provided-ADIOS2-library
