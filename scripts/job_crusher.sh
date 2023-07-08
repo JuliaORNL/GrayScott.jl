@@ -9,7 +9,7 @@
 
 date
 
-GS_DIR=/gpfs/alpine/proj-shared/csc383/wgodoy/ADIOS2-Examples/source/julia/GrayScott.jl
+GS_DIR=/lustre/orion/proj-shared/csc383/wgodoy/GrayScott.jl
 GS_EXE=$GS_DIR/gray-scott.jl
 
 srun -n 1 --gpus=1 julia --project=$GS_DIR $GS_EXE settings-files.json
