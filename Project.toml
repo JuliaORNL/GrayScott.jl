@@ -7,7 +7,6 @@ version = "0.1.0"
 ADIOS2 = "e0ce9d3b-0dbd-416f-8264-ccca772f60ec"
 AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
@@ -17,4 +16,3 @@ Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [compat]
 julia = "1.8"
-CUDA  = "3.13.1"

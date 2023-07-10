@@ -12,8 +12,6 @@ import Distributions
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
 
-# include functions for NVIDIA GPUs using CUDA.jl
-include("Simulation_CUDA.jl")
 # include functions for AMD GPUs using AMDGPU.jl
 include("Simulation_AMDGPU.jl")
 
@@ -62,9 +60,8 @@ Multiple dispatch would direct to the appropriate overleaded function
 function init_fields(settings::Settings,
                      mcd::MPICartDomain, T)::Fields{T}
     lowercase_backend = lowercase(settings.backend)
-    if lowercase_backend == "cuda"
-        return _init_fields_cuda(settings, mcd, T)
-    elseif lowercase_backend == "amdgpu"
+
+    if lowercase_backend == "amdgpu"
         return _init_fields_amdgpu(settings, mcd, T)
     end
     # everything else would trigger the CPU threads backend

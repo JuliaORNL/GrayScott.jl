@@ -28,8 +28,6 @@ export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
 julia --project=$GS_DIR -e 'using Pkg; Pkg.add("MPIPreferences")'
 julia --project=$GS_DIR -e 'using MPIPreferences; MPIPreferences.use_system_binary(; library_names=["libmpi_cray"], mpiexec="srun")'
 
-# Regression being fixed with CUDA v4.0.0. CUDA.jl does lazy loading for portability to systems without NVIDIA GPUs
-julia --project=$GS_DIR -e 'using Pkg; Pkg.add(name="CUDA", version="v3.13.1")' 
 # Adds a custom branch in case the development version is needed (for devs to test new features)
 julia --project=$GS_DIR -e 'using Pkg; Pkg.add(url="https://github.com/utkarsh530/AMDGPU.jl.git", rev="u/random")'
 

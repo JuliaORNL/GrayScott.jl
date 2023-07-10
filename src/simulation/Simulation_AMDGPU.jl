@@ -141,10 +141,10 @@ function _calculte_kernel_amdgpu!(u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
             v_ijk = v[i, j, k]
 
             du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
-                 F * (1.0 - u_ijk)
+                 F * (1.0 - u_ijk) +
+                 noise * rand(Distributions.Uniform(-1, 1))
             # + noise * AMDGPU.rand(eltype(u))
             # WIP in AMDGPU.jl, works with CUDA.jl
-            # + rand(Distributions.Uniform(-1, 1))
 
             dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
                  (F + K) * v_ijk
