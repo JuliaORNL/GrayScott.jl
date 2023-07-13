@@ -18,8 +18,8 @@ function _init_fields_amdgpu(settings::Settings, mcd::MPICartDomain,
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
 
     d::Int64 = 6
-    minL = Int64(settings.L / 2 - d)
-    maxL = Int64(settings.L / 2 + d)
+    minL = Int64(floor(settings.L / 2 - d))
+    maxL = Int64(floor(settings.L / 2 + d))
 
     # @TODO: get ideal grid size and threads
     threads = (16, 16)
