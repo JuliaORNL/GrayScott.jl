@@ -128,6 +128,7 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
             u_temp[i, j, k] = u_ijk + du * dt
             v_temp[i, j, k] = v_ijk + dv * dt
         end
+        return nothing
     end
 
     Du = convert(T, settings.Du)
