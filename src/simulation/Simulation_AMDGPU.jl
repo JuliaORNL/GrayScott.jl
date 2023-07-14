@@ -140,36 +140,20 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
 
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
 
-    threads = (16, 16)
-    grid = (settings.L, settings.L)
+    threads = (1024, 1024, 1024)
+    grid = (settings.L, settings.L, settings.L)
 
-    kernel = AMDGPU.@roc launch=false _calculte_kernel_amdgpu!(fields.u,
-                                                               fields.v,
-                                                               fields.u_temp,
-                                                               fields.v_temp,
-                                                               roc_sizes,
-                                                               Du,
-                                                               Dv,
-                                                               F,
-                                                               K,
-                                                               noise,
-                                                               dt)
-    occupancy = AMDGPU.launch_configuration(kernel)
-    @show occupancy.gridsize
-    @show occupancy.groupsize
-
-    # AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
-    #                                                                                  fields.v,
-    #                                                                                  fields.u_temp,
-    #                                                                                  fields.v_temp,
-    #                                                                                  roc_sizes,
-    #                                                                                  Du,
-    #                                                                                  Dv,
-    #                                                                                  F,
-    #                                                                                  K,
-    #                                                                                  noise,
-    #                                                                                  dt)
-    AMDGPU.synchronize()
+    AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
+                                                                                     fields.v,
+                                                                                     fields.u_temp,
+                                                                                     fields.v_temp,
+                                                                                     roc_sizes,
+                                                                                     Du,
+                                                                                     Dv,
+                                                                                     F,
+                                                                                     K,
+                                                                                     noise,
+                                                                                     dt))
 end
 
 function get_fields(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}}) where {T, N}
