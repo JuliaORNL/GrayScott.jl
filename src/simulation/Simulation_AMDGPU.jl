@@ -140,7 +140,7 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
 
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
 
-    threads = (1024, 1024, 1024)
+    threads = (32, 32, 1)
     grid = (settings.L, settings.L, settings.L)
 
     AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
