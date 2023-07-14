@@ -112,21 +112,23 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
         # loop through non-ghost cells
         if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1 &&
            i >= 2 && i <= sizes[1] + 1
-            u_ijk = u[i, j, k]
-            v_ijk = v[i, j, k]
+            @inbounds begin
+                u_ijk = u[i, j, k]
+                v_ijk = v[i, j, k]
 
-            du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
-                 F * (1.0 - u_ijk) +
-                 noise * rand(Distributions.Uniform(-1, 1))
-            # + noise * AMDGPU.rand(eltype(u))
-            # WIP in AMDGPU.jl, works with CUDA.jl
+                du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
+                     F * (1.0 - u_ijk) +
+                     noise * rand(Distributions.Uniform(-1, 1))
+                # + noise * AMDGPU.rand(eltype(u))
+                # WIP in AMDGPU.jl, works with CUDA.jl
 
-            dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
-                 (F + K) * v_ijk
+                dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
+                     (F + K) * v_ijk
 
-            # advance the next step
-            u_temp[i, j, k] = u_ijk + du * dt
-            v_temp[i, j, k] = v_ijk + dv * dt
+                # advance the next step
+                u_temp[i, j, k] = u_ijk + du * dt
+                v_temp[i, j, k] = v_ijk + dv * dt
+            end
         end
         return nothing
     end
@@ -140,7 +142,7 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
 
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
 
-    threads = (1, 32, 32)
+    threads = (1, 1, 256)
     grid = (settings.L, settings.L, settings.L)
 
     AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
