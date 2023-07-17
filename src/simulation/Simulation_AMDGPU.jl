@@ -110,25 +110,27 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
             AMDGPU.workitemIdx().z
 
         # loop through non-ghost cells
-        if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1 &&
-           i >= 2 && i <= sizes[1] + 1
-            @inbounds begin
-                u_ijk = u[i, j, k]
-                v_ijk = v[i, j, k]
+        if k == 1 || k >= sizes[3] || j == 1 || j >= sizes[2] || i == 1 ||
+           i >= sizes[1]
+            return
+        end
 
-                du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
-                     F * (1.0 - u_ijk) +
-                     noise * rand(Distributions.Uniform(-1, 1))
-                # + noise * AMDGPU.rand(eltype(u))
-                # WIP in AMDGPU.jl, works with CUDA.jl
+        @inbounds begin
+            u_ijk = u[i, j, k]
+            v_ijk = v[i, j, k]
 
-                dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
-                     (F + K) * v_ijk
+            du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
+                 F * (1.0 - u_ijk) +
+                 noise * rand(Distributions.Uniform(-1, 1))
+            # + noise * AMDGPU.rand(eltype(u))
+            # WIP in AMDGPU.jl, works with CUDA.jl
 
-                # advance the next step
-                u_temp[i, j, k] = u_ijk + du * dt
-                v_temp[i, j, k] = v_ijk + dv * dt
-            end
+            dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
+                 (F + K) * v_ijk
+
+            # advance the next step
+            u_temp[i, j, k] = u_ijk + du * dt
+            v_temp[i, j, k] = v_ijk + dv * dt
         end
         return nothing
     end
@@ -142,8 +144,10 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
 
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
 
-    threads = (1, 1, 64)
+    threads = (1, 1, 512)
     grid = (settings.L, settings.L, settings.L)
+
+    kernel_time = @elapsed begin
 
     AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
                                                                                      fields.v,
@@ -155,7 +159,22 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                                                                                      F,
                                                                                      K,
                                                                                      noise,
-                                                                                     dt))
+                                                                                     dt)) end
+
+    nx, ny, nz = mcd.proc_sizes[1:3]
+    theoretical_fetch_size = 2 *
+                             (nx * ny * nz - 8 - 4 * (nx - 2) - 4 * (ny - 2) -
+                              4 * (nz - 2)) * sizeof(T)
+    theoretical_write_size = 2 * ((nx - 2) * (ny - 2) * (nz - 2)) *
+                             sizeof(T)
+
+    println("Theoretical fetch size (GB): ", theoretical_fetch_size * 1e-9)
+    println("Theoretical write size (GB):", theoretical_write_size * 1e-9)
+    ## Effective memory bandwidth
+    datasize = theoretical_fetch_size + theoretical_write_size
+    println("Laplacian kernel took: ", kernel_time * 1000,
+            " ms effective memory bandwidth: ",
+            datasize / kernel_time * 1e-9, " GB/s")
 end
 
 function get_fields(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}}) where {T, N}
