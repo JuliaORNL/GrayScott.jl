@@ -95,61 +95,61 @@ function _populate_amdgpu!(u, v, offsets, sizes, minL, maxL)
     end
 end
 
+function _calculate_kernel_amdgpu!(u::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
+                                   v::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
+                                   u_temp::AMDGPU.Device.ROCDeviceArray{T,
+                                                                        3, 1
+                                                                        },
+                                   v_temp::AMDGPU.Device.ROCDeviceArray{T,
+                                                                        3, 1
+                                                                        },
+                                   sizes::AMDGPU.Device.ROCDeviceArray{T, 3,
+                                                                       1},
+                                   Du, Dv, F, K, noise,
+                                   dt)::Nothing where {T}
+
+    # local coordinates (this are 1-index already)
+    k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
+        AMDGPU.workitemIdx().x
+    j = (AMDGPU.workgroupIdx().y - Int32(1)) * AMDGPU.workgroupDim().y +
+        AMDGPU.workitemIdx().y
+    i = (AMDGPU.workgroupIdx().z - Int32(1)) * AMDGPU.workgroupDim().z +
+        AMDGPU.workitemIdx().z
+
+    # loop through non-ghost cells
+    if k == 1 || k >= sizes[3] || j == 1 || j >= sizes[2] || i == 1 ||
+       i >= sizes[1]
+        return
+    end
+
+    @inbounds begin
+        u_ijk = u[i, j, k]
+        v_ijk = v[i, j, k]
+
+        du = Du * (u[i - 1, j, k] + u[i + 1, j, k] + u[i, j - 1, k] +
+              u[i, j + 1, k] + u[i, j, k - 1] + u[i, j, k + 1] -
+              6.0 * u_ijk) / 6 - u_ijk * v_ijk^2 +
+             F * (1.0 - u_ijk) +
+             noise * rand(Distributions.Uniform(-1, 1))
+        # + noise * AMDGPU.rand(eltype(u))
+        # WIP in AMDGPU.jl, works with CUDA.jl
+
+        dv = Dv *
+             (v[i - 1, j, k] + v[i + 1, j, k] + v[i, j - 1, k] +
+              v[i, j + 1, k] + v[i, j, k - 1] + v[i, j, k + 1] -
+              6.0 * v_ijk) / 6 + u_ijk * v_ijk^2 -
+             (F + K) * v_ijk
+
+        # advance the next step
+        u_temp[i, j, k] = u_ijk + du * dt
+        v_temp[i, j, k] = v_ijk + dv * dt
+    end
+    return nothing
+end
+
 function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                      settings::Settings,
                      mcd::MPICartDomain) where {T, N}
-    function _calculate_kernel_amdgpu!(u::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
-                                       v::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
-                                       u_temp::AMDGPU.Device.ROCDeviceArray{T,
-                                                                            3, 1
-                                                                            },
-                                       v_temp::AMDGPU.Device.ROCDeviceArray{T,
-                                                                            3, 1
-                                                                            },
-                                       sizes::AMDGPU.Device.ROCDeviceArray{T, 3,
-                                                                           1},
-                                       Du, Dv, F, K, noise,
-                                       dt)::Nothing where {T}
-
-        # local coordinates (this are 1-index already)
-        k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
-            AMDGPU.workitemIdx().x
-        j = (AMDGPU.workgroupIdx().y - Int32(1)) * AMDGPU.workgroupDim().y +
-            AMDGPU.workitemIdx().y
-        i = (AMDGPU.workgroupIdx().z - Int32(1)) * AMDGPU.workgroupDim().z +
-            AMDGPU.workitemIdx().z
-
-        # loop through non-ghost cells
-        if k == 1 || k >= sizes[3] || j == 1 || j >= sizes[2] || i == 1 ||
-           i >= sizes[1]
-            return
-        end
-
-        @inbounds begin
-            u_ijk = u[i, j, k]
-            v_ijk = v[i, j, k]
-
-            du = Du * (u[i - 1, j, k] + u[i + 1, j, k] + u[i, j - 1, k] +
-                  u[i, j + 1, k] + u[i, j, k - 1] + u[i, j, k + 1] -
-                  6.0 * u_ijk) / 6 - u_ijk * v_ijk^2 +
-                 F * (1.0 - u_ijk) +
-                 noise * rand(Distributions.Uniform(-1, 1))
-            # + noise * AMDGPU.rand(eltype(u))
-            # WIP in AMDGPU.jl, works with CUDA.jl
-
-            dv = Dv *
-                 (v[i - 1, j, k] + v[i + 1, j, k] + v[i, j - 1, k] +
-                  v[i, j + 1, k] + v[i, j, k - 1] + v[i, j, k + 1] -
-                  6.0 * v_ijk) / 6 + u_ijk * v_ijk^2 -
-                 (F + K) * v_ijk
-
-            # advance the next step
-            u_temp[i, j, k] = u_ijk + du * dt
-            v_temp[i, j, k] = v_ijk + dv * dt
-        end
-        return nothing
-    end
-
     Du = convert(T, settings.Du)
     Dv = convert(T, settings.Dv)
     F = convert(T, settings.F)
