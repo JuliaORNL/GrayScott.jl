@@ -98,14 +98,14 @@ end
 function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                      settings::Settings,
                      mcd::MPICartDomain) where {T, N}
-    function _calculte_kernel_amdgpu!(u::AMDGPU.ROCArray{T, N},
-                                      v::AMDGPU.ROCArray{T, N},
-                                      u_temp::AMDGPU.ROCArray{T, N},
-                                      v_temp::AMDGPU.ROCArray{T, N},
-                                      sizes::AMDGPU.ROCArray{T, 3},
-                                      Du::T,
-                                      Dv::T, F::T, K::T,
-                                      noise::T, dt::T) where {T, N}
+    function _calculate_kernel_amdgpu!(u::AMDGPU.ROCArray{T, N},
+                                       v::AMDGPU.ROCArray{T, N},
+                                       u_temp::AMDGPU.ROCArray{T, N},
+                                       v_temp::AMDGPU.ROCArray{T, N},
+                                       sizes::AMDGPU.ROCArray{T, 3},
+                                       Du::T,
+                                       Dv::T, F::T, K::T,
+                                       noise::T, dt::T) where {T, N}
 
         # local coordinates (this are 1-index already)
         k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
