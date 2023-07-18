@@ -103,10 +103,10 @@ function _calculate_kernel_amdgpu!(u::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
                                    v_temp::AMDGPU.Device.ROCDeviceArray{T,
                                                                         3, 1
                                                                         },
-                                   sizes::AMDGPU.Device.ROCDeviceArray{T, 3,
+                                   sizes::AMDGPU.Device.ROCDeviceArray{Int64, 3,
                                                                        1},
-                                   Du, Dv, F, K, noise,
-                                   dt)::Nothing where {T}
+                                   Du::T, Dv::T, F::T, K::T, noise::T,
+                                   dt::T)::Nothing where {T}
 
     # local coordinates (this are 1-index already)
     k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
