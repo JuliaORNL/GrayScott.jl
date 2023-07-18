@@ -108,8 +108,8 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                                                                             },
                                        sizes::AMDGPU.Device.ROCDeviceArray{T, 3,
                                                                            1},
-                                       Du::T, Dv::T, F::T, K::T, noise::T,
-                                       dt::T) where {T, N}
+                                       Du, Dv, F, K, noise,
+                                       dt)::Nothing where {T}
 
         # local coordinates (this are 1-index already)
         k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
