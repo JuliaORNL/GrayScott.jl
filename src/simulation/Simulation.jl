@@ -258,7 +258,7 @@ end
    7-point stencil around the cell, 
    this is equally a host and a device function!
 """
-function _laplacian(i, j, k, var <: AbstractArray{T, N}) where {T, N}
+function _laplacian(i, j, k, var)
     @inbounds l = var[i - 1, j, k] + var[i + 1, j, k] + var[i, j - 1, k] +
                   var[i, j + 1, k] + var[i, j, k - 1] + var[i, j, k + 1] -
                   6.0 * var[i, j, k]

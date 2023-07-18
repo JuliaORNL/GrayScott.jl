@@ -125,13 +125,18 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
             u_ijk = u[i, j, k]
             v_ijk = v[i, j, k]
 
-            du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
+            du = Du * (u[i - 1, j, k] + u[i + 1, j, k] + u[i, j - 1, k] +
+                  u[i, j + 1, k] + u[i, j, k - 1] + u[i, j, k + 1] -
+                  6.0 * u_ijk) / 6 - u_ijk * v_ijk^2 +
                  F * (1.0 - u_ijk) +
                  noise * rand(Distributions.Uniform(-1, 1))
             # + noise * AMDGPU.rand(eltype(u))
             # WIP in AMDGPU.jl, works with CUDA.jl
 
-            dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
+            dv = Dv *
+                 (v[i - 1, j, k] + v[i + 1, j, k] + v[i, j - 1, k] +
+                  v[i, j + 1, k] + v[i, j, k - 1] + v[i, j, k + 1] -
+                  6.0 * v_ijk) / 6 + u_ijk * v_ijk^2 -
                  (F + K) * v_ijk
 
             # advance the next step
