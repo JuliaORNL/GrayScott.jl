@@ -98,8 +98,14 @@ end
 function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                      settings::Settings,
                      mcd::MPICartDomain) where {T, N}
-    function _calculte_kernel_amdgpu!(u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
-                                      noise, dt)
+    function _calculte_kernel_amdgpu!(u::AMDGPU.ROCArray{T, N},
+                                      v::AMDGPU.ROCArray{T, N},
+                                      u_temp::AMDGPU.ROCArray{T, N},
+                                      v_temp::AMDGPU.ROCArray{T, N},
+                                      sizes::AMDGPU.ROCArray{T, 3},
+                                      Du::T,
+                                      Dv::T, F::T, K::T,
+                                      noise::T, dt::T) where {T, N}
 
         # local coordinates (this are 1-index already)
         k = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
@@ -149,17 +155,17 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
 
     kernel_time = @elapsed begin
 
-    AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculte_kernel_amdgpu!(fields.u,
-                                                                                     fields.v,
-                                                                                     fields.u_temp,
-                                                                                     fields.v_temp,
-                                                                                     roc_sizes,
-                                                                                     Du,
-                                                                                     Dv,
-                                                                                     F,
-                                                                                     K,
-                                                                                     noise,
-                                                                                     dt)) end
+    AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _calculate_kernel_amdgpu!(fields.u,
+                                                                                      fields.v,
+                                                                                      fields.u_temp,
+                                                                                      fields.v_temp,
+                                                                                      roc_sizes,
+                                                                                      Du,
+                                                                                      Dv,
+                                                                                      F,
+                                                                                      K,
+                                                                                      noise,
+                                                                                      dt)) end
 
     nx, ny, nz = mcd.proc_sizes[1:3]
     theoretical_fetch_size = 2 *
