@@ -103,8 +103,8 @@ function _calculate_kernel_amdgpu!(u::AMDGPU.Device.ROCDeviceArray{T, 3, 1},
                                    v_temp::AMDGPU.Device.ROCDeviceArray{T,
                                                                         3, 1
                                                                         },
-                                   sizes::AMDGPU.Device.ROCDeviceArray{Int64, 3,
-                                                                       1},
+                                   sizes::AMDGPU.Device.ROCDeviceArray{Int64, 1
+                                                                       },
                                    Du::T, Dv::T, F::T, K::T, noise::T,
                                    dt::T)::Nothing where {T}
 
