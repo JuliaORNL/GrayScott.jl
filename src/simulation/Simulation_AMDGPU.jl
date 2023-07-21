@@ -21,10 +21,13 @@ function _init_fields_amdgpu(settings::Settings, mcd::MPICartDomain,
     minL = Int64(floor(settings.L / 2 - d))
     maxL = Int64(floor(settings.L / 2 + d))
 
+    nx, ny, nz = mcd.proc_sizes[1:3]
+    @show nx, ny, nz
+
     # @TODO: get ideal grid size and threads
-    threads = (16, 16)
+    threads = (1, 512)
     # grid size must be the total number of threads of each direction
-    grid = (settings.L, settings.L)
+    grid = (ny, nz)
 
     AMDGPU.wait(AMDGPU.@roc groupsize=threads gridsize=grid _populate_amdgpu!(u,
                                                                               v,
