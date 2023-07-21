@@ -158,9 +158,13 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
     dt = convert(T, settings.dt)
 
     roc_sizes = AMDGPU.ROCArray(mcd.proc_sizes)
+    nx, ny, nz = mcd.proc_sizes[1:3]
+    @show nx, ny, nz
 
     threads = (1, 1, 512)
-    grid = (settings.L, settings.L, settings.L)
+    blocks = (nx, ny, div(nz, threads[3]))
+    grid = threads .* blocks
+    @show threads, grid
 
     kernel_time = @elapsed begin
 
@@ -176,7 +180,6 @@ function _calculate!(fields::Fields{T, N, <:AMDGPU.ROCArray{T, N}},
                                                                                       noise,
                                                                                       dt)) end
 
-    nx, ny, nz = mcd.proc_sizes[1:3]
     theoretical_fetch_size = 2 *
                              (nx * ny * nz - 8 - 4 * (nx - 2) - 4 * (ny - 2) -
                               4 * (nz - 2)) * sizeof(T)
