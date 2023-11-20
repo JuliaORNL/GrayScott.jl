@@ -140,11 +140,31 @@ To reuse these file the first 3 entries must be modified and run on login-nodes 
   3. Add data analysis: PDF for u and v and Julia 2D plotting capabilities: Plots.jl, Makie.jl
   4. Add interactive computing with Pluto.jl notebooks
 
+## Citation
+Please cite the following [paper](https://doi.org/10.1145/3624062.3624278) associated with the code, if you find it useful: 
+
+```
+@inproceedings{10.1145/3624062.3624278,
+author = {Godoy, William F. and Valero-Lara, Pedro and Anderson, Caira and Lee, Katrina W. and Gainaru, Ana and Ferreira Da Silva, Rafael and Vetter, Jeffrey S.},
+title = {Julia as a Unifying End-to-End Workflow Language on the Frontier Exascale System},
+year = {2023},
+isbn = {9798400707858},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3624062.3624278},
+doi = {10.1145/3624062.3624278},
+booktitle = {Proceedings of the SC '23 Workshops of The International Conference on High Performance Computing, Network, Storage, and Analysis},
+pages = {1989–1999},
+numpages = {11},
+keywords = {data analysis, exascale, Frontier supercomputer, Jupyter notebooks, end-to-end workflows, High-Performance Computing, Julia, HPC},
+location = {Denver, CO, USA},
+series = {SC-W '23}
+}
+```
 
 ## Acknowledgements
-This research was supported by the Exascale Computing Project (17-SC-20-SC), a joint project of the U.S. Department of Energy’s Office of Science and National Nuclear Security Administration, responsible for delivering a capable exascale ecosystem, including software, applications, and hardware technology, to support the nation’s exascale computing imperative. 
+This research was supported by the Exascale Computing Project (17-SC-20-SC), a joint project of the U.S. Department of Energy’s Office of Science and National Nuclear Security Administration, responsible for delivering a capable exascale ecosystem, including software, applications, and hardware technology, to support the nation’s exascale computing imperative. This work is funded, in part, by Bluestone, a X-Stack project in the DOE Advanced Scientific Computing Office with program manager Hal Finkel.
 
-This research used resources of the Oak Ridge Leadership Computing Facility at the Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC05-00OR22725.
+This research used resources of the Oak Ridge Leadership Computing Facility and the Experimental Computing Laboratory (ExCL) at the Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC05-00OR22725.
 
-Thanks to the Exascale Computing Project PROTEAS-TUNE and ADIOS subprojects, and the ASCR Bluestone.
 Thanks to all the Julia community members, packages developers and maintainers for their great work.
