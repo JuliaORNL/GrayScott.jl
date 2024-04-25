@@ -16,6 +16,8 @@ import ..Settings, ..MPICartDomain, ..Fields
 include("Simulation_CUDA.jl")
 # include functions for AMD GPUs using AMDGPU.jl
 include("Simulation_AMDGPU.jl")
+# include functions for JACC using different back ends
+include("Simulation_JACC.jl")
 
 function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
     mcd = MPICartDomain()
@@ -66,6 +68,8 @@ function init_fields(settings::Settings,
         return _init_fields_cuda(settings, mcd, T)
     elseif lowercase_backend == "amdgpu"
         return _init_fields_amdgpu(settings, mcd, T)
+    elseif lowercase_backend == "jacc"
+        return _init_fields_jacc(settings, mcd, T)
     end
     # everything else would trigger the CPU threads backend
     return _init_fields_cpu(settings, mcd, T)
