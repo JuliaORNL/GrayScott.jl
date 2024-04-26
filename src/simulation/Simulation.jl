@@ -62,7 +62,7 @@ Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl backends
 Multiple dispatch would direct to the appropriate overleaded function
 """
 function init_fields(settings::Settings,
-                     mcd::MPICartDomain, T)::Fields{T}
+        mcd::MPICartDomain, T)::Fields{T}
     lowercase_backend = lowercase(settings.backend)
     if lowercase_backend == "cuda"
         return _init_fields_cuda(settings, mcd, T)
@@ -76,7 +76,7 @@ function init_fields(settings::Settings,
 end
 
 function _init_fields_cpu(settings::Settings,
-                          mcd::MPICartDomain, T)::Fields{T}
+        mcd::MPICartDomain, T)::Fields{T}
     size_x = mcd.proc_sizes[1]
     size_y = mcd.proc_sizes[2]
     size_z = mcd.proc_sizes[3]
@@ -133,7 +133,7 @@ function _init_fields_cpu(settings::Settings,
 end
 
 function iterate!(fields::Fields{T, N, Array{T, N}}, settings::Settings,
-                  mcd::MPICartDomain) where {T, N}
+        mcd::MPICartDomain) where {T, N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
     _calculate!(fields, settings, mcd)
@@ -148,12 +148,12 @@ function _get_mpi_faces(size_x, size_y, size_z, T)
     ## create a new type taking: count, block length, stride
     ## to interoperate with MPI for ghost cell exchange
     xy_face_t = MPI.Types.create_vector(size_y + 2, size_x, size_x + 2,
-                                        MPI.Datatype(T))
+        MPI.Datatype(T))
     xz_face_t = MPI.Types.create_vector(size_z, size_x,
-                                        (size_x + 2) * (size_y + 2),
-                                        MPI.Datatype(T))
+        (size_x + 2) * (size_y + 2),
+        MPI.Datatype(T))
     yz_face_t = MPI.Types.create_vector((size_y + 2) * (size_z + 2), 1,
-                                        size_x + 2, MPI.Datatype(T))
+        size_x + 2, MPI.Datatype(T))
     MPI.Types.commit!(xy_face_t)
     MPI.Types.commit!(xz_face_t)
     MPI.Types.commit!(yz_face_t)
@@ -214,21 +214,21 @@ function _exchange!(fields, mcd)
 
     for var in [u, v]
         _exchange_xy!(var, mcd.proc_sizes[3], fields.xy_face_t,
-                      mcd.proc_neighbors["north"], mcd.proc_neighbors["south"],
-                      mcd.cart_comm)
+            mcd.proc_neighbors["north"], mcd.proc_neighbors["south"],
+            mcd.cart_comm)
 
         _exchange_xz!(var, mcd.proc_sizes[2], fields.xz_face_t,
-                      mcd.proc_neighbors["up"], mcd.proc_neighbors["down"],
-                      mcd.cart_comm)
+            mcd.proc_neighbors["up"], mcd.proc_neighbors["down"],
+            mcd.cart_comm)
 
         _exchange_yz!(var, mcd.proc_sizes[1], fields.yz_face_t,
-                      mcd.proc_neighbors["east"], mcd.proc_neighbors["west"],
-                      mcd.cart_comm)
+            mcd.proc_neighbors["east"], mcd.proc_neighbors["west"],
+            mcd.cart_comm)
     end
 end
 
 function _calculate!(fields::Fields{T, N, Array{T, N}}, settings::Settings,
-                     mcd::MPICartDomain) where {T, N}
+        mcd::MPICartDomain) where {T, N}
     Du = convert(T, settings.Du)
     Dv = convert(T, settings.Dv)
     F = convert(T, settings.F)
@@ -275,9 +275,9 @@ end
 function get_fields(fields::Fields{T, N, Array{T, N}}) where {T, N}
     @inbounds begin
         u_no_ghost = fields.u[(begin + 1):(end - 1), (begin + 1):(end - 1),
-                              (begin + 1):(end - 1)]
+            (begin + 1):(end - 1)]
         v_no_ghost = fields.v[(begin + 1):(end - 1), (begin + 1):(end - 1),
-                              (begin + 1):(end - 1)]
+            (begin + 1):(end - 1)]
     end
     return u_no_ghost, v_no_ghost
 end
