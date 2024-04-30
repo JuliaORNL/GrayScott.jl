@@ -28,32 +28,30 @@ Base.@kwdef mutable struct Settings
     adios_memory_selection::Bool = false
     mesh_type::String = "image"
     precision::String = "Float64"
-    backend::String = "CPU"
 end
 
 SettingsKeys = Set{String}([
-                               "L",
-                               "steps",
-                               "plotgap",
-                               "F",
-                               "k",
-                               "dt",
-                               "Du",
-                               "Dv",
-                               "noise",
-                               "output",
-                               "checkpoint",
-                               "checkpoint_freq",
-                               "checkpoint_output",
-                               "restart",
-                               "restart_input",
-                               "adios_config",
-                               "adios_span",
-                               "adios_memory_selection",
-                               "mesh_type",
-                               "precision",
-                               "backend",
-                           ])
+    "L",
+    "steps",
+    "plotgap",
+    "F",
+    "k",
+    "dt",
+    "Du",
+    "Dv",
+    "noise",
+    "output",
+    "checkpoint",
+    "checkpoint_freq",
+    "checkpoint_output",
+    "restart",
+    "restart_input",
+    "adios_config",
+    "adios_span",
+    "adios_memory_selection",
+    "mesh_type",
+    "precision"
+])
 
 Base.@kwdef mutable struct MPICartDomain
     cart_comm::MPI.Comm = MPI.COMM_NULL
@@ -69,9 +67,10 @@ Base.@kwdef mutable struct MPICartDomain
     proc_offsets::Vector{Int64} = [1, 1, 1]
 
     # couldn't use NamedTuples as struct is mutable
-    proc_neighbors = Dict{String, Int32}("west" => -1, "east" => -1, "up" => -1,
-                                         "down" => -1, "north" => -1,
-                                         "south" => -1)
+    proc_neighbors = Dict{String, Int32}(
+        "west" => -1, "east" => -1, "up" => -1,
+        "down" => -1, "north" => -1,
+        "south" => -1)
 end
 
 """

@@ -1,13 +1,16 @@
 
+module SimulationJACC
+
 import JACC
 
-if JACC.JACCPreferences.backend == "cuda"
-    import CUDA
-elseif JACC.JACCPreferences.backend == "amd"
-    import AMDGPU
-end
+import MPI
+import Distributions
 
-function _init_fields_jacc(settings::Settings, mcd::MPICartDomain,
+using GrayScott: Simulation
+using GrayScott.Simulation: _get_mpi_faces, _exchange!, _laplacian
+import GrayScott: Settings, MPICartDomain, Fields
+
+function Simulation._init_fields(settings::Settings, mcd::MPICartDomain,
         T)::Fields{T, 3, <:JACC.Array{T, 3}}
     size_x = mcd.proc_sizes[1]
     size_y = mcd.proc_sizes[2]
@@ -38,7 +41,7 @@ function _init_fields_jacc(settings::Settings, mcd::MPICartDomain,
     return fields
 end
 
-function iterate!(fields::Fields{T, N, <:JACC.Array{T, N}},
+function Simulation.iterate!(fields::Fields{T, N, <:JACC.Array{T, N}},
         settings::Settings, mcd::MPICartDomain) where {T, N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
@@ -122,14 +125,16 @@ function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     noise = convert(T, settings.noise)
     dt = convert(T, settings.dt)
 
+    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.Array(mcd.proc_sizes)
 
-    JACC.parallel_for((sizes[2], sizes[3]), _calculate_kernel!,
+    JACC.parallel_for((Ly, Lz), _calculate_kernel!,
         fields.u, fields.v, fields.u_temp, fields.v_temp,
         sizes, Du, Dv, F, K, noise, dt)
 end
 
-function get_fields(fields::Fields{T, N, <:JACC.Array{T, N}}) where {T, N}
+function Simulation.get_fields(fields::Fields{
+        T, N, <:JACC.Array{T, N}}) where {T, N}
     u = Array(fields.u)
     u_no_ghost = u[(begin + 1):(end - 1), (begin + 1):(end - 1),
         (begin + 1):(end - 1)]
@@ -138,4 +143,6 @@ function get_fields(fields::Fields{T, N, <:JACC.Array{T, N}}) where {T, N}
     v_no_ghost = v[(begin + 1):(end - 1), (begin + 1):(end - 1),
         (begin + 1):(end - 1)]
     return u_no_ghost, v_no_ghost
+end
+
 end

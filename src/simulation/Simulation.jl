@@ -4,20 +4,32 @@ CUDA.jl and AMDGPU.jl
 """
 module Simulation
 
-export init_domain, init_fields
+export init_domain, init_fields, iterate!, get_fields
 
+import Pkg
 import MPI
 import Distributions
 
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
 
-# include functions for NVIDIA GPUs using CUDA.jl
-include("Simulation_CUDA.jl")
-# include functions for AMD GPUs using AMDGPU.jl
-include("Simulation_AMDGPU.jl")
-# include functions for JACC using different back ends
-include("Simulation_JACC.jl")
+# manages the simulation computation
+include("../GrayScottPreferences.jl")
+
+@static if endswith(GrayScottPreferences.backend, "cuda")
+    Pkg.add("CUDA")
+    import CUDA
+    println("Using CUDA as back end")
+elseif endswith(GrayScottPreferences.backend, "amdgpu")
+    Pkg.add("AMDGPU")
+    import AMDGPU
+    println("Using AMDGPU as back end")
+end
+
+@static if startswith(GrayScottPreferences.backend, "jacc-")
+    Pkg.add(name = "JACC", rev = "main")
+    import JACC
+end
 
 function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
     mcd = MPICartDomain()
@@ -63,20 +75,10 @@ Multiple dispatch would direct to the appropriate overleaded function
 """
 function init_fields(settings::Settings,
         mcd::MPICartDomain, T)::Fields{T}
-    lowercase_backend = lowercase(settings.backend)
-    if lowercase_backend == "cuda"
-        return _init_fields_cuda(settings, mcd, T)
-    elseif lowercase_backend == "amdgpu"
-        return _init_fields_amdgpu(settings, mcd, T)
-    elseif lowercase_backend == "jacc"
-        return _init_fields_jacc(settings, mcd, T)
-    end
-    # everything else would trigger the CPU threads backend
-    return _init_fields_cpu(settings, mcd, T)
+    return _init_fields(settings, mcd, T)
 end
 
-function _init_fields_cpu(settings::Settings,
-        mcd::MPICartDomain, T)::Fields{T}
+function _init_fields(settings::Settings, mcd::MPICartDomain, T)::Fields{T}
     size_x = mcd.proc_sizes[1]
     size_y = mcd.proc_sizes[2]
     size_z = mcd.proc_sizes[3]
@@ -209,8 +211,8 @@ function _exchange!(fields, mcd)
 
     # if already a CPU array, no need to copy, 
     # otherwise (device) copy to host. 
-    u = typeof(fields.u) <: Array ? fields.u : Array(fields.u)
-    v = typeof(fields.v) <: Array ? fields.v : Array(fields.v)
+    u = typeof(fields.u) <: Base.Array ? fields.u : Base.Array(fields.u)
+    v = typeof(fields.v) <: Base.Array ? fields.v : Base.Array(fields.v)
 
     for var in [u, v]
         _exchange_xy!(var, mcd.proc_sizes[3], fields.xy_face_t,
@@ -227,7 +229,8 @@ function _exchange!(fields, mcd)
     end
 end
 
-function _calculate!(fields::Fields{T, N, Array{T, N}}, settings::Settings,
+function _calculate!(
+        fields::Fields{T, N, Base.Array{T, N}}, settings::Settings,
         mcd::MPICartDomain) where {T, N}
     Du = convert(T, settings.Du)
     Dv = convert(T, settings.Dv)
@@ -272,7 +275,7 @@ function _laplacian(i, j, k, var)
     return l / 6.0
 end
 
-function get_fields(fields::Fields{T, N, Array{T, N}}) where {T, N}
+function get_fields(fields::Fields{T, N, Base.Array{T, N}}) where {T, N}
     @inbounds begin
         u_no_ghost = fields.u[(begin + 1):(end - 1), (begin + 1):(end - 1),
             (begin + 1):(end - 1)]

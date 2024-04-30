@@ -18,6 +18,5 @@
     "adios_span": false,
     "adios_memory_selection": false,
     "mesh_type": "image",
-    "precision": "Float32",
-    "backend": "JACC"
+    "precision": "Float32"
 }
