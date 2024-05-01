@@ -1,2 +1,2 @@
 [GrayScott]
-backend = "threads"
+backend = "jacc-cuda"

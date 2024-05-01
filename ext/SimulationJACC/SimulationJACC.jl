@@ -7,11 +7,34 @@ import MPI
 import Distributions
 
 using GrayScott: Simulation
-using GrayScott.Simulation: _get_mpi_faces, _exchange!, _laplacian
+using GrayScott.Simulation: _get_mpi_faces, _exchange!, _is_inside, _laplacian
 import GrayScott: Settings, MPICartDomain, Fields
 
 function Simulation._init_fields(settings::Settings, mcd::MPICartDomain,
         T)::Fields{T, 3, <:JACC.Array{T, 3}}
+    function _init_fields_kernel!(ly, lz, u, v, offsets, sizes, minL, maxL)
+        if lz <= size(u, 3) && ly <= size(u, 2)
+
+            # get global coordinates
+            z = lz + offsets[3] - 1
+            y = ly + offsets[2] - 1
+
+            if z >= minL && z <= maxL && y >= minL && y <= maxL
+                xoff = offsets[1]
+
+                for x in minL:maxL
+                    # check if global coordinates for initialization are inside the region
+                    if !_is_inside(x, y, z, offsets, sizes)
+                        continue
+                    end
+
+                    # Julia is 1-index, like Fortran :)
+                    u[x - xoff + 2, ly + 1, lz + 1] = 0.25
+                    v[x - xoff + 2, ly + 1, lz + 1] = 0.33
+                end
+            end
+        end
+    end
     size_x = mcd.proc_sizes[1]
     size_y = mcd.proc_sizes[2]
     size_z = mcd.proc_sizes[3]
@@ -30,9 +53,10 @@ function Simulation._init_fields(settings::Settings, mcd::MPICartDomain,
     minL = Int64(settings.L / 2 - d)
     maxL = Int64(settings.L / 2 + d)
 
-    ncenter_cells = maxL - minL + 1
+    # ncenter_cells = maxL - minL + 1
+    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    JACC.parallel_for((ncenter_cells, ncenter_cells), _populate_jacc!,
+    JACC.parallel_for((Ly, Lz), _init_fields_kernel!,
         u, v, offsets, sizes, minL, maxL)
 
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
@@ -50,44 +74,6 @@ function Simulation.iterate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     # swap the names
     fields.u, fields.u_temp = fields.u_temp, fields.u
     fields.v, fields.v_temp = fields.v_temp, fields.v
-end
-
-function _populate_jacc!(ly, lz, u, v, offsets, sizes, minL, maxL)
-    function is_inside(x, y, z, offsets, sizes)::Bool
-        if x < offsets[1] || x >= offsets[1] + sizes[1]
-            return false
-        end
-        if y < offsets[2] || y >= offsets[2] + sizes[2]
-            return false
-        end
-        if z < offsets[3] || z >= offsets[3] + sizes[3]
-            return false
-        end
-
-        return true
-    end
-
-    if lz <= size(u, 3) && ly <= size(u, 2)
-
-        # get global coordinates
-        z = lz + offsets[3] - 1
-        y = ly + offsets[2] - 1
-
-        if z >= minL && z <= maxL && y >= minL && y <= maxL
-            xoff = offsets[1]
-
-            for x in minL:maxL
-                # check if global coordinates for initialization are inside the region
-                if !is_inside(x, y, z, offsets, sizes)
-                    continue
-                end
-
-                # Julia is 1-index, like Fortran :)
-                u[x - xoff + 2, ly + 1, lz + 1] = 0.25
-                v[x - xoff + 2, ly + 1, lz + 1] = 0.33
-            end
-        end
-    end
 end
 
 function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
@@ -128,7 +114,7 @@ function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.Array(mcd.proc_sizes)
 
-    JACC.parallel_for((Ly, Lz), _calculate_kernel!,
+    JACC.parallel_for((Ly + 2, Lz + 2), _calculate_kernel!,
         fields.u, fields.v, fields.u_temp, fields.v_temp,
         sizes, Du, Dv, F, K, noise, dt)
 end

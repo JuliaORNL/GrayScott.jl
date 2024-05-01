@@ -7,26 +7,13 @@ import MPI
 import Distributions
 
 using GrayScott: Simulation
-using GrayScott.Simulation: _get_mpi_faces, _exchange!, _laplacian
+using GrayScott.Simulation: _get_mpi_faces, _exchange!, _is_inside, _laplacian
 import GrayScott: Settings, MPICartDomain, Fields
 
 function Simulation._init_fields(
         settings::Settings, mcd::MPICartDomain,
         T)::Fields{T, 3, <:AMDGPU.ROCArray{T, 3}}
     function _init_fields_kernel!(u, v, offsets, sizes, minL, maxL)
-        function is_inside(x, y, z, offsets, sizes)::Bool
-            if x < offsets[1] || x >= offsets[1] + sizes[1]
-                return false
-            end
-            if y < offsets[2] || y >= offsets[2] + sizes[2]
-                return false
-            end
-            if z < offsets[3] || z >= offsets[3] + sizes[3]
-                return false
-            end
-
-            return true
-        end
 
         # local coordinates (this are 1-index already)
         lz = (AMDGPU.workgroupIdx().x - Int32(1)) * AMDGPU.workgroupDim().x +
@@ -46,7 +33,7 @@ function Simulation._init_fields(
 
                 for x in minL:maxL
                     # check if global coordinates for initialization are inside the region
-                    if !is_inside(x, y, z, offsets, sizes)
+                    if !_is_inside(x, y, z, offsets, sizes)
                         continue
                     end
 

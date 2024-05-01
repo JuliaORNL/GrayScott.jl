@@ -17,6 +17,7 @@ import ..Settings, ..MPICartDomain, ..Fields
 include("../GrayScottPreferences.jl")
 
 @static if endswith(GrayScottPreferences.backend, "cuda")
+    # @TODO Julia Pkg.add will add target = :weakdeps in later versions
     Pkg.add("CUDA")
     import CUDA
     println("Using CUDA as back end")
@@ -262,6 +263,24 @@ function _calculate!(
             end
         end
     end
+end
+
+"""
+   Check if the cell is inside the domain, 
+   this is equally a host and a device function!
+"""
+function _is_inside(x, y, z, offsets, sizes)::Bool
+    if x < offsets[1] || x >= offsets[1] + sizes[1]
+        return false
+    end
+    if y < offsets[2] || y >= offsets[2] + sizes[2]
+        return false
+    end
+    if z < offsets[3] || z >= offsets[3] + sizes[3]
+        return false
+    end
+
+    return true
 end
 
 """
