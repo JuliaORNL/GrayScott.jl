@@ -9,6 +9,7 @@ export init_domain, init_fields, iterate!, get_fields
 import Pkg
 import MPI
 import Distributions
+import JACC
 
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
@@ -25,11 +26,6 @@ elseif endswith(GrayScottPreferences.backend, "amdgpu")
     Pkg.add("AMDGPU")
     import AMDGPU
     println("Using AMDGPU as back end")
-end
-
-@static if startswith(GrayScottPreferences.backend, "jacc-")
-    Pkg.add(name = "JACC", rev = "main")
-    import JACC
 end
 
 function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
@@ -71,63 +67,56 @@ function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
 end
 
 """
-Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl backends
-Multiple dispatch would direct to the appropriate overleaded function
+Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl JACC backends
 """
-function init_fields(settings::Settings,
-        mcd::MPICartDomain, T)::Fields{T}
-    return _init_fields(settings, mcd, T)
-end
+function init_fields(settings::Settings, mcd::MPICartDomain,
+        T)::Fields{T, 3, <:JACC.Array{T, 3}}
+    function _init_fields_kernel!(ly, lz, u, v, offsets, sizes, minL, maxL)
+        if lz <= size(u, 3) && ly <= size(u, 2)
 
-function _init_fields(settings::Settings, mcd::MPICartDomain, T)::Fields{T}
+            # get global coordinates
+            z = lz + offsets[3] - 1
+            y = ly + offsets[2] - 1
+
+            if z >= minL && z <= maxL && y >= minL && y <= maxL
+                xoff = offsets[1]
+
+                for x in minL:maxL
+                    # check if global coordinates for initialization are inside the region
+                    if !_is_inside(x, y, z, offsets, sizes)
+                        continue
+                    end
+
+                    # Julia is 1-index, like Fortran :)
+                    u[x - xoff + 2, ly + 1, lz + 1] = 0.25
+                    v[x - xoff + 2, ly + 1, lz + 1] = 0.33
+                end
+            end
+        end
+    end
     size_x = mcd.proc_sizes[1]
     size_y = mcd.proc_sizes[2]
     size_z = mcd.proc_sizes[3]
 
     # should be ones
-    u = ones(T, size_x + 2, size_y + 2, size_z + 2)
-    v = zeros(T, size_x + 2, size_y + 2, size_z + 2)
+    u = JACC.ones(T, size_x + 2, size_y + 2, size_z + 2)
+    v = JACC.zeros(T, size_x + 2, size_y + 2, size_z + 2)
 
-    u_temp = zeros(T, size_x + 2, size_y + 2, size_z + 2)
-    v_temp = zeros(T, size_x + 2, size_y + 2, size_z + 2)
+    u_temp = JACC.zeros(T, size_x + 2, size_y + 2, size_z + 2)
+    v_temp = JACC.zeros(T, size_x + 2, size_y + 2, size_z + 2)
 
-    function is_inside(x, y, z, offsets, sizes)::Bool
-        if x < offsets[1] || x >= offsets[1] + sizes[1]
-            return false
-        end
-        if y < offsets[2] || y >= offsets[2] + sizes[2]
-            return false
-        end
-        if z < offsets[3] || z >= offsets[3] + sizes[3]
-            return false
-        end
-
-        return true
-    end
+    offsets = JACC.Array(mcd.proc_offsets)
+    sizes = JACC.Array(mcd.proc_sizes)
 
     d::Int64 = 6
-
-    # global locations
     minL = Int64(settings.L / 2 - d)
     maxL = Int64(settings.L / 2 + d)
 
-    xoff = mcd.proc_offsets[1]
-    yoff = mcd.proc_offsets[2]
-    zoff = mcd.proc_offsets[3]
+    # ncenter_cells = maxL - minL + 1
+    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    Threads.@threads for z in minL:maxL
-        for y in minL:maxL
-            for x in minL:maxL
-                if !is_inside(x, y, z, mcd.proc_offsets, mcd.proc_sizes)
-                    continue
-                end
-
-                # Julia is 1-index, like Fortran :)
-                u[x - xoff + 2, y - yoff + 2, z - zoff + 2] = 0.25
-                v[x - xoff + 2, y - yoff + 2, z - zoff + 2] = 0.33
-            end
-        end
-    end
+    JACC.parallel_for((Ly, Lz), _init_fields_kernel!,
+        u, v, offsets, sizes, minL, maxL)
 
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
 
@@ -135,7 +124,7 @@ function _init_fields(settings::Settings, mcd::MPICartDomain, T)::Fields{T}
     return fields
 end
 
-function iterate!(fields::Fields{T, N, Array{T, N}}, settings::Settings,
+function iterate!(fields::Fields{T, N, <:JACC.Array{T, N}}, settings::Settings,
         mcd::MPICartDomain) where {T, N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
@@ -230,9 +219,34 @@ function _exchange!(fields, mcd)
     end
 end
 
-function _calculate!(
-        fields::Fields{T, N, Base.Array{T, N}}, settings::Settings,
-        mcd::MPICartDomain) where {T, N}
+function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
+        settings::Settings, mcd::MPICartDomain) where {T, N}
+    function _calculate_kernel!(
+            j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
+            noise, dt)
+
+        # loop through non-ghost cells
+        if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1
+            # bounds are inclusive
+            for i in 2:(sizes[1] + 1)
+                u_ijk = u[i, j, k]
+                v_ijk = v[i, j, k]
+
+                du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
+                     F * (1.0 - u_ijk) +
+                     noise * rand(Distributions.Uniform(-1, 1))
+
+                dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
+                     (F + K) * v_ijk
+
+                # advance the next step
+                u_temp[i, j, k] = u_ijk + du * dt
+                v_temp[i, j, k] = v_ijk + dv * dt
+            end
+        end
+    end
+
+    # use the same floating point representation for all inputs
     Du = convert(T, settings.Du)
     Dv = convert(T, settings.Dv)
     F = convert(T, settings.F)
@@ -240,29 +254,12 @@ function _calculate!(
     noise = convert(T, settings.noise)
     dt = convert(T, settings.dt)
 
-    # loop through non-ghost cells, bounds are inclusive
-    # @TODO: load balancing? option: a big linear loop
-    # use @inbounds at the right for-loop level, avoid putting it at the top level
-    Threads.@threads for k in 2:(mcd.proc_sizes[3] + 1)
-        for j in 2:(mcd.proc_sizes[2] + 1)
-            @inbounds for i in 2:(mcd.proc_sizes[1] + 1)
-                u = fields.u[i, j, k]
-                v = fields.v[i, j, k]
+    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
+    sizes = JACC.Array(mcd.proc_sizes)
 
-                # introduce a random disturbance on du
-                du = Du * _laplacian(i, j, k, fields.u) - u * v^2 +
-                     F * (1.0 - u) +
-                     noise * rand(Distributions.Uniform(-1, 1))
-
-                dv = Dv * _laplacian(i, j, k, fields.v) + u * v^2 -
-                     (F + K) * v
-
-                # advance the next step
-                fields.u_temp[i, j, k] = u + du * dt
-                fields.v_temp[i, j, k] = v + dv * dt
-            end
-        end
-    end
+    JACC.parallel_for((Ly + 2, Lz + 2), _calculate_kernel!,
+        fields.u, fields.v, fields.u_temp, fields.v_temp,
+        sizes, Du, Dv, F, K, noise, dt)
 end
 
 """
@@ -294,13 +291,15 @@ function _laplacian(i, j, k, var)
     return l / 6.0
 end
 
-function get_fields(fields::Fields{T, N, Base.Array{T, N}}) where {T, N}
-    @inbounds begin
-        u_no_ghost = fields.u[(begin + 1):(end - 1), (begin + 1):(end - 1),
-            (begin + 1):(end - 1)]
-        v_no_ghost = fields.v[(begin + 1):(end - 1), (begin + 1):(end - 1),
-            (begin + 1):(end - 1)]
-    end
+function get_fields(fields::Fields{
+        T, N, <:JACC.Array{T, N}}) where {T, N}
+    u = Array(fields.u)
+    u_no_ghost = u[(begin + 1):(end - 1), (begin + 1):(end - 1),
+        (begin + 1):(end - 1)]
+
+    v = Array(fields.v)
+    v_no_ghost = v[(begin + 1):(end - 1), (begin + 1):(end - 1),
+        (begin + 1):(end - 1)]
     return u_no_ghost, v_no_ghost
 end
 
