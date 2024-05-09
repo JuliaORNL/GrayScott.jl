@@ -9,6 +9,8 @@ module GrayScott
 
 import MPI, ADIOS2
 
+include("GrayScottPreferences.jl")
+
 # contains relevant data containers "structs" for Input, Domain and Fields
 include(joinpath("simulation", "Structs.jl"))
 

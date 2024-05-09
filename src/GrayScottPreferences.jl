@@ -6,8 +6,8 @@ using Preferences
 # taken from https://github.com/JuliaPackaging/Preferences.jl
 function set_backend(new_backend::String)
     new_backend_lc = lowercase(new_backend)
-    if !(new_backend_lc in ("threads", "cuda", "amdgpu", "jacc"))
-        throw(ArgumentError("Invalid backend: \"$(new_backend)\""))
+    if !(new_backend_lc in ("jacc-threads", "jacc-cuda", "jacc-amdgpu"))
+        throw(ArgumentError("Invalid backend: \"$(new_backend)\" accepted values: jacc-threads, jacc-cuda, jacc-amdgpu"))
     end
 
     # Set it in our runtime values, as well as saving it to disk
