@@ -16,8 +16,9 @@ module purge
 module load PrgEnv-gnu-amd/8.4.0
 module load cray-mpich
 module load adios2/2.9.2
+module load julia/1.10.4
 # point at current Julia installation until module is available on Odo
-export PATH=/gpfs/wolf2/olcf/trn023/world-shared/opt/julia-1.10.3/bin:$PATH
+# export PATH=/gpfs/wolf2/olcf/trn023/world-shared/opt/julia-1.10.3/bin:$PATH
 
 # Required to point at underlying modules above
 export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
@@ -30,7 +31,7 @@ julia --project=$GS_DIR -e 'using MPIPreferences; MPIPreferences.use_system_bina
 # this will polute Project.toml with AMDGPU.jl
 julia --project=$GS_DIR -e 'using Pkg; Pkg.add("AMDGPU")'
 
-export ROCM_PATH=/opt/rocm-default
+export ROCM_PATH=/opt/rocm-5.3.0
 # adds an entry to LocalPreferences.toml
 julia --project=$GS_DIR -e 'using AMDGPU; AMDGPU.ROCmDiscovery.use_artifacts!(false)'
 
