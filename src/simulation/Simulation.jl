@@ -251,9 +251,27 @@ function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.Array(mcd.proc_sizes)
 
-    JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
-        fields.u, fields.v, fields.u_temp, fields.v_temp,
-        sizes, Du, Dv, F, K, noise, dt)
+    kernel_time = @elapsed begin
+        JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
+            fields.u, fields.v, fields.u_temp, fields.v_temp,
+            sizes, Du, Dv, F, K, noise, dt)
+    end
+
+    # Effective memory bandwidth
+    nx, ny, nz = mcd.proc_sizes[1:3]
+    theoretical_fetch_size = 2 *
+                             (nx * ny * nz - 8 - 4 * (nx - 2) - 4 * (ny - 2) -
+                              4 * (nz - 2)) * sizeof(T)
+    theoretical_write_size = 2 * ((nx - 2) * (ny - 2) * (nz - 2)) *
+                             sizeof(T)
+
+    println("Theoretical fetch size (GB): ", theoretical_fetch_size * 1e-9)
+    println("Theoretical write size (GB):", theoretical_write_size * 1e-9)
+
+    datasize = theoretical_fetch_size + theoretical_write_size
+    println("Laplacian kernel took: ", kernel_time * 1000,
+        " ms effective memory bandwidth: ",
+        datasize / kernel_time * 1e-9, " GB/s")
 end
 
 """
