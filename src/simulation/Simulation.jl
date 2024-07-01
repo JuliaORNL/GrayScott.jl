@@ -71,27 +71,24 @@ Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl JACC backends
 """
 function init_fields(settings::Settings, mcd::MPICartDomain,
         T)::Fields{T, 3, <:JACC.Array{T, 3}}
-    function _init_fields_kernel!(ly, lz, u, v, offsets, sizes, minL, maxL)
-        if lz <= size(u, 3) && ly <= size(u, 2)
+    function _init_fields_kernel!(lx, ly, lz, u, v, offsets, sizes, minL, maxL)
 
-            # get global coordinates
-            z = lz + offsets[3] - 1
-            y = ly + offsets[2] - 1
+        # get global coordinates
+        z = lz + offsets[3] - 1
+        y = ly + offsets[2] - 1
+        x = lx + offsets[1] - 1
 
-            if z >= minL && z <= maxL && y >= minL && y <= maxL
-                xoff = offsets[1]
+        if z >= minL && z <= maxL && y >= minL && y <= maxL && x >= minL &&
+           x <= maxL
 
-                for x in minL:maxL
-                    # check if global coordinates for initialization are inside the region
-                    if !_is_inside(x, y, z, offsets, sizes)
-                        continue
-                    end
-
-                    # Julia is 1-index, like Fortran :)
-                    u[x - xoff + 2, ly + 1, lz + 1] = 0.25
-                    v[x - xoff + 2, ly + 1, lz + 1] = 0.33
-                end
+            # check if global coordinates for initialization are inside the region
+            if !_is_inside(x, y, z, offsets, sizes)
+                return
             end
+
+            # Julia is 1-index, like Fortran :)
+            u[lx + 1, ly + 1, lz + 1] = 0.25
+            v[lx + 1, ly + 1, lz + 1] = 0.33
         end
     end
     size_x = mcd.proc_sizes[1]
@@ -113,9 +110,9 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     maxL = Int64(settings.L / 2 + d)
 
     # ncenter_cells = maxL - minL + 1
-    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
+    Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    JACC.parallel_for((Ly, Lz), _init_fields_kernel!,
+    JACC.parallel_for((Lx, Ly, Lz), _init_fields_kernel!,
         u, v, offsets, sizes, minL, maxL)
 
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
@@ -222,27 +219,24 @@ end
 function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
         settings::Settings, mcd::MPICartDomain) where {T, N}
     function _calculate_kernel!(
-            j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
+            i, j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
             noise, dt)
+        if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1 &&
+           i >= 2 && i <= sizes[1] + 1
+            # loop through non-ghost cells
+            u_ijk = u[i, j, k]
+            v_ijk = v[i, j, k]
 
-        # loop through non-ghost cells
-        if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1
-            # bounds are inclusive
-            for i in 2:(sizes[1] + 1)
-                u_ijk = u[i, j, k]
-                v_ijk = v[i, j, k]
+            du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
+                 F * (1.0 - u_ijk) +
+                 noise * rand(Distributions.Uniform(-1, 1))
 
-                du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
-                     F * (1.0 - u_ijk) +
-                     noise * rand(Distributions.Uniform(-1, 1))
+            dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
+                 (F + K) * v_ijk
 
-                dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
-                     (F + K) * v_ijk
-
-                # advance the next step
-                u_temp[i, j, k] = u_ijk + du * dt
-                v_temp[i, j, k] = v_ijk + dv * dt
-            end
+            # advance the next step
+            u_temp[i, j, k] = u_ijk + du * dt
+            v_temp[i, j, k] = v_ijk + dv * dt
         end
     end
 
@@ -254,10 +248,10 @@ function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     noise = convert(T, settings.noise)
     dt = convert(T, settings.dt)
 
-    Ly, Lz = mcd.proc_sizes[2], mcd.proc_sizes[3]
+    Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.Array(mcd.proc_sizes)
 
-    JACC.parallel_for((Ly + 2, Lz + 2), _calculate_kernel!,
+    JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
         fields.u, fields.v, fields.u_temp, fields.v_temp,
         sizes, Du, Dv, F, K, noise, dt)
 end
