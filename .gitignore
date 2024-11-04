@@ -29,3 +29,6 @@ LocalPreferences.toml
 
 # ADIOS-2 generated files
 /*.bp
+
+# Stats generated
+statprof/
