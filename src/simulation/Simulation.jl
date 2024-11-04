@@ -6,27 +6,14 @@ module Simulation
 
 export init_domain, init_fields, iterate!, get_fields
 
-import Pkg
 import MPI
 import Distributions
 import JACC
+JACC.@init_backend
 
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
 
-# manages the simulation computation
-include("../GrayScottPreferences.jl")
-
-@static if endswith(GrayScottPreferences.backend, "cuda")
-    # @TODO Julia Pkg.add will add target = :weakdeps in later versions
-    Pkg.add("CUDA")
-    import CUDA
-    println("Using CUDA as back end")
-elseif endswith(GrayScottPreferences.backend, "amdgpu")
-    Pkg.add("AMDGPU")
-    import AMDGPU
-    println("Using AMDGPU as back end")
-end
 
 function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
     mcd = MPICartDomain()
@@ -70,7 +57,7 @@ end
 Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl JACC backends
 """
 function init_fields(settings::Settings, mcd::MPICartDomain,
-        T)::Fields{T, 3, <:JACC.Array{T, 3}}
+        T)::Fields{T, 3, <:JACC.array_type(){T, 3}}
     function _init_fields_kernel!(lx, ly, lz, u, v, offsets, sizes, minL, maxL)
 
         # get global coordinates
@@ -102,8 +89,8 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     u_temp = JACC.zeros(T, size_x + 2, size_y + 2, size_z + 2)
     v_temp = JACC.zeros(T, size_x + 2, size_y + 2, size_z + 2)
 
-    offsets = JACC.Array(mcd.proc_offsets)
-    sizes = JACC.Array(mcd.proc_sizes)
+    offsets = JACC.array(mcd.proc_offsets)
+    sizes = JACC.array(mcd.proc_sizes)
 
     d::Int64 = 6
     minL = Int64(settings.L / 2 - d)
@@ -121,7 +108,8 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     return fields
 end
 
-function iterate!(fields::Fields{T, N, <:JACC.Array{T, N}}, settings::Settings,
+function iterate!(
+        fields::Fields{T, N, <:JACC.array_type(){T, N}}, settings::Settings,
         mcd::MPICartDomain) where {T, N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
@@ -216,7 +204,7 @@ function _exchange!(fields, mcd)
     end
 end
 
-function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
+function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
         settings::Settings, mcd::MPICartDomain) where {T, N}
     function _calculate_kernel!(
             i, j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
@@ -249,7 +237,7 @@ function _calculate!(fields::Fields{T, N, <:JACC.Array{T, N}},
     dt = convert(T, settings.dt)
 
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
-    sizes = JACC.Array(mcd.proc_sizes)
+    sizes = JACC.array(mcd.proc_sizes)
 
     JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
         fields.u, fields.v, fields.u_temp, fields.v_temp,
@@ -286,7 +274,7 @@ function _laplacian(i, j, k, var)
 end
 
 function get_fields(fields::Fields{
-        T, N, <:JACC.Array{T, N}}) where {T, N}
+        T, N, <:JACC.array_type(){T, N}}) where {T, N}
     u = Array(fields.u)
     u_no_ghost = u[(begin + 1):(end - 1), (begin + 1):(end - 1),
         (begin + 1):(end - 1)]

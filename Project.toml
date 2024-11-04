@@ -11,10 +11,8 @@ JACC = "0979c8fe-16a4-4796-9b82-89a9f10403ea"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
-PProf = "e4faabce-9ead-11e9-39d9-4379958e3056"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-Preferences = "21216c6a-2e73-6563-6e65-726566657250"
-Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [compat]
-julia = "1.9"
+julia = "1.11"
+JACC = "0.3.1"

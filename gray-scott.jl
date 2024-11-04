@@ -1,5 +1,6 @@
 import GrayScott
 
+# using StatProfilerHTML
 # using Profile
 # using PProf
 
@@ -10,6 +11,7 @@ end
 
 if !isdefined(Base, :active_repl)
     @time julia_main()
+    # @profilehtml julia_main()
     # @profile julia_main()
     # pprof()
 end
