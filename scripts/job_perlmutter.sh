@@ -11,7 +11,7 @@
 #SBATCH --gpus-per-task=1
 
 #export SLURM_CPU_BIND="cores"
-GS_DIR=$HOME/GrayScott.jl
+GS_DIR=$SCRATCH/$USER/GrayScott.jl
 GS_EXE=$GS_DIR/gray-scott.jl
 
 srun -n 1 --gpus=1 julia --project=$GS_DIR $GS_EXE settings-files.json
