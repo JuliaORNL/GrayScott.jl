@@ -43,6 +43,8 @@ julia --project=$GS_DIR -e 'using CUDA; CUDA.set_runtime_version!(v"12.2"; local
 
 # Instantiate the project by installing packages in Project.toml
 julia --project=$GS_DIR -e 'using Pkg; Pkg.instantiate()'
+# Specific JACC version
+julia --project=$GS_DIR -e 'using Pkg; Pkg.add(name="JACC", version="0.0.5")'
 # Verify the packages are installed correctly
 julia --project=$GS_DIR -e 'using Pkg; Pkg.build()'
 # JACC.jl and GrayScott.jl won't precompile, but other packages will
