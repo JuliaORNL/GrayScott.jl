@@ -3,17 +3,17 @@ import MPI
 import ArgParse
 import ADIOS2
 
-function _epsilon(d::T)::Bool where {T<:Number}
+function _epsilon(d::T)::Bool where {T <: Number}
     return (d < 1.0e-20)
 end
 
 """
 Return 2 arrays pdf and bins of a 2D slice
 """
-function _compute_pdf(data::Array{T,3}, shape, count, nbins, min::T,
-    max::T) where {T}
-    pdf = Array{T,2}(undef, nbins, count)
-    bins = Array{T,1}(undef, nbins)
+function _compute_pdf(data::Array{T, 3}, shape, count, nbins, min::T,
+        max::T) where {T}
+    pdf = Array{T, 2}(undef, nbins, count)
+    bins = Array{T, 1}(undef, nbins)
     bin_width = (max - min) / nbins
 
     for i in 1:nbins
@@ -49,7 +49,7 @@ function _compute_pdf(data::Array{T,3}, shape, count, nbins, min::T,
 end
 
 function _parse_arguments(args)
-    s = ArgParse.ArgParseSettings(description="gray-scott workflow pdf generator, Julia version")
+    s = ArgParse.ArgParseSettings(description = "gray-scott workflow pdf generator, Julia version")
 
     #  @add_arg_table! s begin
     #       "--opt1"               # an option (will take an argument)

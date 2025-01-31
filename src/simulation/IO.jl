@@ -11,7 +11,7 @@ import ..Simulation
 import ..Settings, ..MPICartDomain, ..Fields, ..IOStream
 
 function init(settings::Settings, mcd::MPICartDomain,
-              fields::Fields{T}) where {T}
+        fields::Fields{T}) where {T}
 
     # initialize adios MPI using the cartesian communicator
     adios = ADIOS2.adios_init_mpi(mcd.cart_comm)
@@ -71,7 +71,7 @@ function _add_visualization_schemas(io, length)
     ADIOS2.define_attribute(io, "Fides_Dimension_Variable", "U")
     ADIOS2.define_attribute_array(io, "Fides_Variable_List", ["U", "V"])
     ADIOS2.define_attribute_array(io, "Fides_Variable_Associations",
-                                  ["points", "points"])
+        ["points", "points"])
 
     # VTX schema
     # string concatenation uses *, ^ is for repetition 
