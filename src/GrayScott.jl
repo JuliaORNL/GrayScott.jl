@@ -20,7 +20,6 @@ import .Helper
 include(joinpath("simulation", "Inputs.jl"))
 import .Inputs
 
-# manages the simulation computation
 include(joinpath("simulation", "Simulation.jl"))
 import .Simulation
 
@@ -53,8 +52,8 @@ function main(args::Vector{String})::Int32
 
     # initialize fields
     fields = Simulation.init_fields(settings,
-                                    mpi_cart_domain,
-                                    Helper.get_type(settings.precision))
+        mpi_cart_domain,
+        Helper.get_type(settings.precision))
 
     # initialize IOStream struct holding ADIOS-2 components for parallel I/O
     stream = IO.init(settings, mpi_cart_domain, fields)
@@ -70,7 +69,7 @@ function main(args::Vector{String})::Int32
         if step % settings.plotgap == 0
             if rank == 0
                 println("Simulation at step ", step, " writing output step ",
-                        step / settings.plotgap)
+                    step / settings.plotgap)
             end
 
             IO.write_step!(stream, step, fields)

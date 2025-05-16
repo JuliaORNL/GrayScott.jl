@@ -34,9 +34,10 @@ end
 
 # local scope functions
 function _parse_args(args::Vector{String};
-                     error_handler = ArgParse.default_handler)::String
-    s = ArgParse.ArgParseSettings(description = "gray-scott workflow simulation example configuration file, Julia version, GrayScott.jl",
-                                  exc_handler = error_handler)
+        error_handler = ArgParse.default_handler)::String
+    s = ArgParse.ArgParseSettings(
+        description = "gray-scott workflow simulation example configuration file, Julia version, GrayScott.jl",
+        exc_handler = error_handler)
 
     #  @add_arg_table! s begin
     #       "--opt1"               # an option (will take an argument)

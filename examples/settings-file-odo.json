@@ -8,7 +8,7 @@
     "plotgap": 10,
     "steps": 1000,
     "noise": 0.1,
-    "output": "gs-1MPI-1GPU-64L-F32-JACC-CUDA.bp",
+    "output": "gs-1MPI-1GPU-64L-F32-JACC-AMDGPU.bp",
     "checkpoint": false,
     "checkpoint_freq": 700,
     "checkpoint_output": "ckpt.bp",
