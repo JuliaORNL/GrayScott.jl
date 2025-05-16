@@ -45,7 +45,7 @@ for step in 1:steps
         println("Showing step", step )
         f = CairoMakie.Figure()
         CairoMakie.heatmap(f[1,1], sliceU)
-        CairoMakie.heatmap(f[1,2], sliceV),
+        CairoMakie.heatmap(f[1,2], sliceV)
         display(f)
         # Save each step figure U,V pair in pdf format
         CairoMakie.save(string("U_V_",step,".pdf"), f)
