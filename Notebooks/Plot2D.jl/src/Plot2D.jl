@@ -30,7 +30,7 @@ for step in 1:steps
     ADIOS2.set_selection(varU, start, count)
 
     varV = ADIOS2.inquire_variable(io, "V")
-    @assert varU isa ADIOS2.Variable string("Could not find variable V")
+    @assert varV isa ADIOS2.Variable string("Could not find variable V")
     ADIOS2.set_selection(varV, start, count)
 
     ADIOS2.get(reader, varU, sliceU)
