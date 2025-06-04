@@ -14,14 +14,14 @@ module purge
 # load required modules
 module load PrgEnv-gnu-amd/8.6.0
 module load cray-mpich
-module load adios2/2.10.0-mpi
+module load adios2/2.9.2
 
 # Use Julia binary distribution until module is available
 # module load julia/1.11.3
 export PATH=/gpfs/wolf2/olcf/trn036/world-shared/julia-1.11.3/bin:$PATH
 
 # Will seek ROCM system libraries (default = /opt/rocm)
-export ROCM_PATH=/opt/rocm-5.7.1
+export ROCM_PATH=/opt/rocm-6.2.4
 
 # Required to point at underlying modules above
 export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
