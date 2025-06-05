@@ -12,16 +12,15 @@ rm -f $GS_DIR/LocalPreferences.toml
 module purge
 
 # load required modules
-module load PrgEnv-gnu-amd/8.6.0
+module load PrgEnv-cray/8.6.0
 module load cray-mpich
+module load rocm/6.3.1
 module load adios2/2.10.0-mpi
+module load Core/25.05
+module load julia/1.11.0
 
-# Use Julia binary distribution until module is available
-# module load julia/1.11.3
-export PATH=/gpfs/wolf2/olcf/trn036/world-shared/julia-1.11.3/bin:$PATH
-
-# Will seek ROCM system libraries (default = /opt/rocm)
-export ROCM_PATH=/opt/rocm-5.7.1
+# AMDGPU.jl requires rocm system libraries (default = /opt/rocm)
+export ROCM_PATH=/opt/rocm-6.3.1
 
 # Required to point at underlying modules above
 export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
