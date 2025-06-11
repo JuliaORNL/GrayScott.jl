@@ -1,0 +1,77 @@
+--------------------
+L = 128
+Block dimensions: (1024, 1, 1)
+ 11.355593 seconds (4.69 M allocations: 19.801 GiB, 20.76% gc time, 22.58% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 3.1612974e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 518.269239296 GB/s
+ 25.475653 seconds (16.64 M allocations: 20.386 GiB, 10.69% gc time, 62.71% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (512, 2, 1)
+ 10.339227 seconds (4.69 M allocations: 19.801 GiB, 22.76% gc time, 21.28% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.7834943e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 588.613812224 GB/s
+ 22.987775 seconds (16.71 M allocations: 20.389 GiB, 11.01% gc time, 61.93% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (256, 4, 1)
+ 10.314621 seconds (4.69 M allocations: 19.801 GiB, 22.88% gc time, 1 lock conflict, 21.45% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.3309784e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 702.882185216 GB/s
+ 22.957548 seconds (16.64 M allocations: 20.386 GiB, 11.03% gc time, 1 lock conflict, 62.24% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (128, 8, 1)
+ 10.686860 seconds (4.69 M allocations: 19.801 GiB, 22.22% gc time, 1 lock conflict, 20.93% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.3094532e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 709.43342592 GB/s
+ 23.355126 seconds (16.64 M allocations: 20.386 GiB, 10.86% gc time, 1 lock conflict, 61.01% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (64, 16, 1)
+ 10.488873 seconds (4.69 M allocations: 19.801 GiB, 22.65% gc time, 1 lock conflict, 21.22% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.302061e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 711.71145728 GB/s
+ 23.175320 seconds (16.71 M allocations: 20.389 GiB, 11.10% gc time, 1 lock conflict, 61.57% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (32, 32, 1)
+ 10.462788 seconds (4.69 M allocations: 19.801 GiB, 22.61% gc time, 1 lock conflict, 21.48% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.254561e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 726.70609408 GB/s
+ 23.095959 seconds (16.71 M allocations: 20.389 GiB, 11.04% gc time, 1 lock conflict, 62.17% compilation time: 2% of which was recompilation)
+--------------------
+L = 128
+Block dimensions: (16, 8, 8)
+ 11.249141 seconds (4.69 M allocations: 19.801 GiB, 21.20% gc time, 20.06% compilation time)
+Elapsed times size: 1000
+avg kernel execution time (s): 2.2608123e-5
+nx, ny, nz = 128
+theoretical_fetch_size = 8382528
+theoretical_write_size = 8001504
+computed bandwidth = 724.696694784 GB/s
+ 23.670970 seconds (16.64 M allocations: 20.386 GiB, 10.68% gc time, 59.71% compilation time: 2% of which was recompilation)
