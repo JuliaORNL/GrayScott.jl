@@ -1,6 +1,6 @@
 
 """
-Submodule used by GrayScott to handle inputs 
+Submodule used by GrayScott to handle inputs
 """
 module Inputs
 
@@ -69,7 +69,12 @@ function _parse_settings_json(json_contents::String)::Settings
     for (key, value) in json
         # Iterate through predefined keys, else ignore (no error if unrecognized)
         if key in SettingsKeys
-            setproperty!(settings, Symbol(key), value)
+            if key == "block_dim"
+                tuple_val = Tuple(Int32.(value))
+                setproperty!(settings, :block_dim, tuple_val)
+            else
+                setproperty!(settings, Symbol(key), value)
+            end
         end
     end
 

@@ -3,11 +3,12 @@
 Settings carry the settings from the simulation config file (json or yaml formats)
 
 Using Base.@kwdef macro for easy defaults and enable keyword arguments
-Settings(Du = 0.2, noise = 0.2) 
+Settings(Du = 0.2, noise = 0.2)
 See:
 https://discourse.julialang.org/t/default-value-of-some-fields-in-a-mutable-struct/33408/24?u=williamfgc
 """
 Base.@kwdef mutable struct Settings
+    block_dim::Tuple{Int32, Int32, Int32} = (1024, 1, 1)
     L::Int64 = 128
     steps::Int32 = 20000
     plotgap::Int32 = 200
@@ -31,6 +32,7 @@ Base.@kwdef mutable struct Settings
 end
 
 SettingsKeys = Set{String}([
+    "block_dim",
     "L",
     "steps",
     "plotgap",

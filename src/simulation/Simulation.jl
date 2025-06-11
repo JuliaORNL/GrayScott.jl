@@ -1,5 +1,5 @@
-""" 
-The present file contains runtime backend for using CPU Threads, and optionally 
+"""
+The present file contains runtime backend for using CPU Threads, and optionally
 CUDA.jl and AMDGPU.jl
 """
 module Simulation
@@ -110,10 +110,10 @@ end
 
 function iterate!(
         fields::Fields{T, N, <:JACC.array_type(){T, N}}, settings::Settings,
-        mcd::MPICartDomain) where {T, N}
+        mcd::MPICartDomain, elapsed_times::AbstractVector{Float32}) where {T, N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
-    _calculate!(fields, settings, mcd)
+    _calculate!(fields, settings, mcd, elapsed_times)
 
     # swap the names
     fields.u, fields.u_temp = fields.u_temp, fields.u
@@ -184,8 +184,8 @@ function _exchange!(fields, mcd)
         MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank2, source = rank1)
     end
 
-    # if already a CPU array, no need to copy, 
-    # otherwise (device) copy to host. 
+    # if already a CPU array, no need to copy,
+    # otherwise (device) copy to host.
     u = typeof(fields.u) <: Base.Array ? fields.u : Base.Array(fields.u)
     v = typeof(fields.v) <: Base.Array ? fields.v : Base.Array(fields.v)
 
@@ -205,7 +205,7 @@ function _exchange!(fields, mcd)
 end
 
 function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
-        settings::Settings, mcd::MPICartDomain) where {T, N}
+        settings::Settings, mcd::MPICartDomain, elapsed_times::AbstractVector{Float32}) where {T, N}
     function _calculate_kernel!(
             i, j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
             noise, dt)
@@ -236,16 +236,18 @@ function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
     noise = convert(T, settings.noise)
     dt = convert(T, settings.dt)
 
+    custom_spec = JACC.launch_spec(; threads = settings.block_dim)
+
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.array(mcd.proc_sizes)
 
-    JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
+    push!(elapsed_times, @elapsed JACC.parallel_for(custom_spec, (Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
         fields.u, fields.v, fields.u_temp, fields.v_temp,
-        sizes, Du, Dv, F, K, noise, dt)
+        sizes, Du, Dv, F, K, noise, dt))
 end
 
 """
-   Check if the cell is inside the domain, 
+   Check if the cell is inside the domain,
    this is equally a host and a device function!
 """
 function _is_inside(x, y, z, offsets, sizes)::Bool
@@ -263,7 +265,7 @@ function _is_inside(x, y, z, offsets, sizes)::Bool
 end
 
 """
-   7-point stencil around the cell, 
+   7-point stencil around the cell,
    this is equally a host and a device function!
 """
 function _laplacian(i, j, k, var)
@@ -285,4 +287,4 @@ function get_fields(fields::Fields{
     return u_no_ghost, v_no_ghost
 end
 
-end # module 
+end # module
