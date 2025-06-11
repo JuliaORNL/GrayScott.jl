@@ -1,0 +1,50 @@
+--------------------
+L = 1024
+Block dimensions: (1024, 1, 1)
+575.892728 seconds (4.53 M allocations: 965.392 GiB, 8.74% gc time, 0.37% compilation time)
+avg kernel execution time (s): 0.16388123
+nx, ny, nz = 1024
+theoretical_fetch_size = 8589836416
+theoretical_write_size = 4269850592
+computed bandwidth = 78.469554176 GB/s
+609.873557 seconds (16.54 M allocations: 965.980 GiB, 8.28% gc time, 2.30% compilation time: 2% of which was recompilation)
+--------------------
+L = 1024
+Block dimensions: (512, 2, 1)
+574.476566 seconds (4.53 M allocations: 965.392 GiB, 8.84% gc time, 0.38% compilation time)
+avg kernel execution time (s): 0.13329454
+nx, ny, nz = 1024
+theoretical_fetch_size = 8589836416
+theoretical_write_size = 4269850592
+computed bandwidth = 96.475725824 GB/s
+611.765668 seconds (16.54 M allocations: 965.980 GiB, 8.33% gc time, 2.31% compilation time: 2% of which was recompilation)
+--------------------
+L = 1024
+Block dimensions: (256, 4, 1)
+575.957611 seconds (4.53 M allocations: 965.392 GiB, 8.80% gc time, 0.37% compilation time)
+avg kernel execution time (s): 0.12049219
+nx, ny, nz = 1024
+theoretical_fetch_size = 8589836416
+theoretical_write_size = 4269850592
+computed bandwidth = 106.726309888 GB/s
+614.307129 seconds (16.54 M allocations: 965.980 GiB, 8.28% gc time, 2.28% compilation time: 2% of which was recompilation)
+--------------------
+L = 1024
+Block dimensions: (128, 8, 1)
+574.089219 seconds (4.53 M allocations: 965.392 GiB, 8.82% gc time, 0.37% compilation time)
+avg kernel execution time (s): 0.11229253
+nx, ny, nz = 1024
+theoretical_fetch_size = 8589836416
+theoretical_write_size = 4269850592
+computed bandwidth = 114.519523328 GB/s
+610.703271 seconds (16.54 M allocations: 965.980 GiB, 8.32% gc time, 2.31% compilation time: 2% of which was recompilation)
+--------------------
+L = 1024
+Block dimensions: (64, 16, 1)
+577.858025 seconds (4.53 M allocations: 965.392 GiB, 8.78% gc time, 0.37% compilation time)
+avg kernel execution time (s): 0.10959942
+nx, ny, nz = 1024
+theoretical_fetch_size = 8589836416
+theoretical_write_size = 4269850592
+computed bandwidth = 117.333532672 GB/s
+614.977506 seconds (16.60 M allocations: 965.984 GiB, 8.28% gc time, 2.28% compilation time: 2% of which was recompilation)

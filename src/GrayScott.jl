@@ -88,8 +88,6 @@ function main(args::Vector{String})::Int32
     # Compute the effective memory bandwidth:
     # effective_memory_bandwidth = (theoretical_fetch_size + theoretical_write_size) / average_kernel_execution_time
 
-    println("Elapsed times size: ", length(elapsed_times))
-
     # the warm-up call is not used for calculation
     avg_kernel_execution = mean(elapsed_times[2:end])
     println("avg kernel execution time (s): ", avg_kernel_execution)
@@ -97,7 +95,7 @@ function main(args::Vector{String})::Int32
     n_xyz = settings.L
     println("nx, ny, nz = ", n_xyz)
     # theoretical_fetch_size = ((nx * ny * nz - 8 - 4 * (nx - 2) - 4 * (ny - 2) - 4 * (nz - 2) ) * sizeof(double)
-    fetch_size               = (n_xyz^3 - 8 - 12 * (n_xyz - 2) ) * sizeof(Float32)
+    fetch_size               = (n_xyz^3 - 8 - 12 * (n_xyz - 2) ) * sizeof(Float32) * 2
     println("theoretical_fetch_size = ", fetch_size)
 
     # theoretical_write_size = ((nx - 2) * (ny - 2) * (nz - 2)) * sizeof(double)

@@ -209,6 +209,13 @@ function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
     function _calculate_kernel!(
             i, j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
             noise, dt)
+
+        # wait_cycles = 1000000
+        # for i in 1:wait_cycles
+        #     @inbounds sin(float(i))  # do something cheap to avoid optimization
+        # end
+
+
         if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1 &&
            i >= 2 && i <= sizes[1] + 1
             # loop through non-ghost cells
@@ -241,9 +248,14 @@ function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.array(mcd.proc_sizes)
 
-    push!(elapsed_times, @elapsed JACC.parallel_for(custom_spec, (Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
-        fields.u, fields.v, fields.u_temp, fields.v_temp,
-        sizes, Du, Dv, F, K, noise, dt))
+    val, time, bytes, gctime, mem_allocs = @timed begin
+        JACC.parallel_for(custom_spec, (Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
+            fields.u, fields.v, fields.u_temp, fields.v_temp,
+            sizes, Du, Dv, F, K, noise, dt)
+        JACC.synchronize()
+    end
+    # println("Kernel execution: ", time, " sec")
+    push!(elapsed_times, time)
 end
 
 """

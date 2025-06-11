@@ -39,12 +39,6 @@ function _parse_args(args::Vector{String};
         description = "gray-scott workflow simulation example configuration file, Julia version, GrayScott.jl",
         exc_handler = error_handler)
 
-    #  @add_arg_table! s begin
-    #       "--opt1"               # an option (will take an argument)
-    #       "--opt2", "-o"         # another option, with short form
-    #       "arg1"                 # a positional argument
-    #   end
-
     ArgParse.@add_arg_table! s begin
         "config_file"
         help = "configuration file"
