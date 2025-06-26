@@ -21,4 +21,4 @@ julia --project -e 'using IJulia; installkernel("Julia-16-threads", "--project=@
 
 cd $HOME
 # resulting kernel.json
-cat ~/.local/share/jupyter/kernels/Julia-16-threads/kernel.json
+cat ~/.local/share/jupyter/kernels/julia-16-threads/kernel.json
