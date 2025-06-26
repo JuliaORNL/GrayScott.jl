@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # source this file to generate a new IJulia kernel for Perlmutter
 module load julia/1.10.4
