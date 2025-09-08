@@ -25,7 +25,7 @@ module load adios2
 
 # module julia 1.11, won't work with julia 1.10
 ml use /global/common/software/nersc9/julia/modules/
-module load julia/1.11.3
+module load julia/1.11.5
 
 # Required for Julia bindings to point at underlying adios2 modules
 #export JULIA_ADIOS2_PATH=/global/common/software/nersc/julia_hpc_24/adios2/gnu
