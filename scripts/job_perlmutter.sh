@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -A ntrain1
+#SBATCH -A trn019
 #SBATCH -C gpu
 #SBATCH -q shared
 #SBATCH -J gs-julia-1MPI-1GPU

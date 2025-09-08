@@ -15,12 +15,12 @@ rm -f $GS_DIR/LocalPreferences.toml
 module purge
 
 # load required modules
-module load PrgEnv-gnu
+module load PrgEnv-nvidia
 # this is just due to an adios2 requirement, parallel HDF5 can be added in the future
 module load cray-hdf5-parallel
 # module load nvhpc not tested, use cudatoolkit instead
 module load cudatoolkit/12.2
-ml use /global/common/software/nersc/julia_hpc_24/modules
+module use /global/common/software/nstaff/blaschke/tutorials/julia-hpc-tutorial-icpp25/nersc/modules
 module load adios2
 
 # module julia 1.11, won't work with julia 1.10
