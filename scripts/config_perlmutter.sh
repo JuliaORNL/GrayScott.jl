@@ -28,7 +28,8 @@ ml use /global/common/software/nersc9/julia/modules/
 module load julia/1.11.3
 
 # Required for Julia bindings to point at underlying adios2 modules
-export JULIA_ADIOS2_PATH=/global/common/software/nersc/julia_hpc_24/adios2/gnu
+#export JULIA_ADIOS2_PATH=/global/common/software/nersc/julia_hpc_24/adios2/gnu
+export JULIA_ADIOS2_PATH=/global/common/software/nstaff/blaschke/tutorials/julia-hpc-tutorial-icpp25/nersc/adios2/install/nvidia
 
 # Instantiate the project by installing packages in Project.toml
 julia --project=$GS_DIR -e 'using Pkg; Pkg.instantiate()'
