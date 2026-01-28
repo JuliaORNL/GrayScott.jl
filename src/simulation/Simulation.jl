@@ -1,7 +1,3 @@
-""" 
-The present file contains runtime backend for using CPU Threads, and optionally 
-CUDA.jl and AMDGPU.jl
-"""
 module Simulation
 
 export init_domain, init_fields, iterate!, get_fields
@@ -99,9 +95,8 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     # ncenter_cells = maxL - minL + 1
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    JACC.parallel_for((Lx, Ly, Lz), _init_fields_kernel!,
-        u, v, offsets, sizes, minL, maxL)
-
+    JACC.@parallel_for range=(Lx, Ly, Lz) _init_fields_kernel!(u, v, offsets, sizes, minL, maxL)
+    
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
 
     fields = Fields(u, v, u_temp, v_temp, xy_face_t, xz_face_t, yz_face_t)
@@ -239,7 +234,7 @@ function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.array(mcd.proc_sizes)
 
-    JACC.parallel_for((Lx + 2, Ly + 2, Lz + 2), _calculate_kernel!,
+    JACC.@parallel_for range=(Lx + 2, Ly + 2, Lz + 2) _calculate_kernel!(
         fields.u, fields.v, fields.u_temp, fields.v_temp,
         sizes, Du, Dv, F, K, noise, dt)
 end
