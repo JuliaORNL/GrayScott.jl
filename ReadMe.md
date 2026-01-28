@@ -1,31 +1,29 @@
-# ADIOS2-Examples GrayScott.jl
+# GrayScott.jl for Julia for HPC
 
-Julia version of [the gray-scott C++ and Python](https://github.com/ornladios/ADIOS2-Examples/blob/master/source/cpp/gray-scott/)
-example. 
+![GrayScott "U" evolution](https://github.com/JuliaORNL/TutorialJuliaHPC/blob/7a8d4e99a4f4aa05ce74b21f673adee86c9e5512/docs/applications/GrayScott/images/gray-scott.gif)
+
 
 This is a 3D 7-point stencil code to simulate the following [Gray-Scott
-reaction diffusion model](https://doi.org/10.1126/science.261.5118.189):
+reaction diffusion model](https://doi.org/10.1126/science.261.5118.189) that can run on CPU and GPUs using [JACC.jl](https://github.com/JuliaGPU/JACC.jl):
 
 ```
-u_t = Du * (u_xx + u_yy + u_zz) - u * v^2 + F * (1 - u) + noise * randn(-1,1)
-v_t = Dv * (v_xx + v_yy + v_zz) + u * v^2 - (F + k) * v
+U_t = DU * (U_xx + u_yy + u_zz) - U * V^2 + F * (1 - U) + noise * randn(-1,1)
+V_t = DV * (V_xx + v_yy + v_zz) + U * V^2 - (F + k) * V
 ```
 
-This version contains: 
+This version contains the following capabilities: 
 
-- CPU threaded solver using Julia's [multithreading]](https://docs.julialang.org/en/v1/manual/multi-threading/)
-- GPU solvers using [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl)
+- CPU/GPU solvers using [JACC.jl](git@github.com:JuliaGPU/JACC.jl.git), GPUs supported: NVIDIA, AMD, Intel and Apple
 - Parallel I/O using the [ADIOS2.jl](https://github.com/eschnett/ADIOS2.jl) Julia bindings to [ADIOS2](https://github.com/ornladios/ADIOS2)
 - Message passing interface (MPI) using [MPI.jl](https://github.com/JuliaParallel/MPI.jl) Julia bindings to MPI
-- Easily switch between float- (Float32) and double- (Float64) precision in the configuration file
+- Easily switch between float- (Float32) and double- (Float64) precision in the configuration file (Apple GPUs do not support Float64, and Intel GPUs have limited support)
+- Data analysis under Notebooks/Plot2D written in Julia and Julia+Jupyter 
 
 ## How to run
 
-Currently only the simulation part is ported from C++, the PDFcalc data analysis is work-in-progress. 
-
 Pre-requisities:
 
-- A recent Julia version: v1.9.0 as of May 2023 from [julialang.org/downloads](https://julialang.org/downloads/)
+- Julia version v1.11.0 or greater from [julialang.org/downloads](https://julialang.org/downloads/)
 
 ### Run locally 
 
@@ -55,13 +53,6 @@ Julia manages its own packages using [Pkg.jl](https://pkgdocs.julialang.org/v1/)
 To use a system provided ADIOS2 library, see [here](https://eschnett.github.io/ADIOS2.jl/dev/#Using-a-custom-or-system-provided-ADIOS2-library). 
 It just sets the environment variable `JULIA_ADIOS2_PATH` and build ADIOS2.jl in Julia.
 
-**Note**: GrayScott.jl requires the `main` development version.
-
-    ```
-    $ julia
-    julia> ]
-    GrayScott.jl> add ADIOS2#main  
-    ```
 
 2. **Set up the examples/settings-files.json configuration file**
 
@@ -87,35 +78,27 @@ It just sets the environment variable `JULIA_ADIOS2_PATH` and build ADIOS2.jl in
     "adios_memory_selection": false,
     "mesh_type": "image",
     "precision": "Float32",
-    "backend": "CPU"
 }
 ```
-
-The file is nearly identical to the C++ original example. 
-Not all options are currently supported, but two Julia-only options are added: 
-
-    - "precision": either Float32 or Float64 in the array simulation (including GPUs)
-    - "backend": "CPU", "CUDA" or "AMDGPU"
 
 
 3. **Running the simulation**
 
-- `CPU threads`: launch julia assigning a number of threads (e.g. -t 8):
+GrayScott.jl uses JACC.jl for performance portability. Use `JACC.set_backend(backend)`, where `backend = CUDA, AMDGPU, Metal, oneAPI` to setup `LocalPreferences.toml` , see [JACC documentation](https://juliagpu.github.io/JACC.jl/stable/#Supported-backends). To run the simulation:
+
+- `CPU threads`: set CPU threads with `-t` 
 
     ```
     $ julia --project -t 8 gray-scott.jl examples/settings-files.json
     ```
 
-- `CUDA/AMDGPU`: set the "backend" option in examples/settings-files.json to either "CUDA" or "AMDGPU"
+- `GPU`: 
 
     ```
     $ julia --project gray-scott.jl examples/settings-files.json
     ```
 
-This would generate an adios2 file from the output entry in the configuration file (e.g. `gs-julia-1MPI-64L-F32.bp`)
-that can be visualized with ParaView with either the VTX or the FIDES readers.
-**Important**: the AMDGPU.jl implementation of `randn` is currently work in progress. 
-See related issue [here](https://github.com/JuliaGPU/AMDGPU.jl/issues/378)
+This would generate an adios2 file from the output entry in the configuration file (e.g. `gs-julia-1MPI-64L-F32.bp`) that can be visualized with ParaView with either the VTX or the FIDES readers.
 
 
 4. **Running on OLCF Summit and Crusher systems**
@@ -133,15 +116,11 @@ To reuse these file the first 3 entries must be modified and run on login-nodes 
     export PATH=$PROJ_DIR/opt/summit/julia-1.9.0-beta3/bin:$PATH
     ```
 
-## To-do list
-
-  1. Add support including random number on device kernel code on `AMDGPU.jl`
-  2. Set the domain size `L` in the configuration file as a multiple of 6 for Summit, and a multiple of 4 on Crusher
-  3. Add data analysis: PDF for u and v and Julia 2D plotting capabilities: Plots.jl, Makie.jl
-  4. Add interactive computing with Pluto.jl notebooks
-
+ 
 ## Citation
-Please cite the following [paper](https://doi.org/10.1145/3624062.3624278) associated with the code, if you find it useful: 
+If you find GrayScott.jl useful, please cite the following [SC'23 WORKS best paper](https://doi.org/10.1145/3624062.3624278).
+
+bib entry:
 
 ```
 @inproceedings{10.1145/3624062.3624278,
@@ -163,8 +142,17 @@ series = {SC-W '23}
 ```
 
 ## Acknowledgements
-This research was supported by the Exascale Computing Project (17-SC-20-SC), a joint project of the U.S. Department of Energy’s Office of Science and National Nuclear Security Administration, responsible for delivering a capable exascale ecosystem, including software, applications, and hardware technology, to support the nation’s exascale computing imperative. This work is funded, in part, by Bluestone, a X-Stack project in the DOE Advanced Scientific Computing Office with program manager Hal Finkel.
+The work is funded by the US Department of Energy Advanced Scientific Computing Research (ASCR) projects:
+
+- [S4PST]([www.s4pst.org](https://s4pst.org/)) as part of the Next Generation of Scientific Software Technologies (NGSST) ASCR Program.
+- NGSST sponsors the Consortium for the Advancement of Scientific Software, [CASS](https://cass.community/)
+- ASCR Competitive Portfolios for Advanced Scientific Computing Research, MAGMA/Fairbanks
+
+Former sponsors:
+
+- ASCR Bluestone X-Stack
+- The Exascale Computing Project - PROTEAS-TUNE
 
 This research used resources of the Oak Ridge Leadership Computing Facility and the Experimental Computing Laboratory (ExCL) at the Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC05-00OR22725.
 
-Thanks to all the Julia community members, packages developers and maintainers for their great work.
+Thanks to all the Julia and JuliaGPU community members, packages developers and maintainers for their great work.
