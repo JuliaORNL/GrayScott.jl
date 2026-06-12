@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJ_DIR=/gpfs/wolf2/olcf/trn036/scratch/$USER
+PROJ_DIR=/gpfs/wolf2/olcf/trn047/scratch/$USER
 export JULIA_DEPOT_PATH=$PROJ_DIR/.julia
 GS_DIR=$PROJ_DIR/GrayScott.jl
 
@@ -11,16 +11,18 @@ rm -f $GS_DIR/LocalPreferences.toml
 # good practice to avoid conflicts with existing default modules
 module purge
 
+ROCM_VERSION=7.2.0
+
 # load required modules
 module load PrgEnv-cray/8.6.0
 module load cray-mpich
-module load rocm/6.3.1
+module load rocm/$ROCM_VERSION
 module load adios2/2.10.0-mpi
 module load Core/25.05
 module load julia/1.11.0
 
 # AMDGPU.jl requires rocm system libraries (default = /opt/rocm)
-export ROCM_PATH=/opt/rocm-6.3.1
+export ROCM_PATH=/opt/rocm-$ROCM_VERSION
 
 # Required to point at underlying modules above
 export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
