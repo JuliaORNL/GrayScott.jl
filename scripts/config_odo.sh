@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJ_DIR=/gpfs/wolf2/olcf/trn047/scratch/$USER
-export JULIA_DEPOT_PATH=$PROJ_DIR/.julia
+export JULIA_DEPOT_PATH=$PROJ_DIR/.julia-gray-scott
 GS_DIR=$PROJ_DIR/GrayScott.jl
 
 # remove existing generated Manifest.toml
@@ -11,15 +11,14 @@ rm -f $GS_DIR/LocalPreferences.toml
 # good practice to avoid conflicts with existing default modules
 module purge
 
-ROCM_VERSION=7.2.0
+ROCM_VERSION=7.14.1
 
 # load required modules
 module load PrgEnv-cray/8.6.0
 module load cray-mpich
 module load rocm/$ROCM_VERSION
-module load adios2/2.10.0-mpi
-module load Core/25.05
-module load julia/1.11.0
+module load adios2/2.10.2-mpi
+module load julia/1.13.1
 
 # AMDGPU.jl requires rocm system libraries (default = /opt/rocm)
 export ROCM_PATH=/opt/rocm-$ROCM_VERSION
