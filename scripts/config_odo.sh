@@ -11,7 +11,7 @@ rm -f $GS_DIR/LocalPreferences.toml
 # good practice to avoid conflicts with existing default modules
 module purge
 
-ROCM_VERSION=7.14.1
+ROCM_VERSION=7.2.0
 
 # load required modules
 module load PrgEnv-cray/8.6.0
