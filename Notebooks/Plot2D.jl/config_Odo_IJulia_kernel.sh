@@ -12,7 +12,7 @@ JUPYTER_KERNEL_FILE=$HOME/.local/share/jupyter/kernels/julia-hpc-sc26-1.13/kerne
 
 if [ ! -f "$JUPYTER_KERNEL_FILE" ]; then
     echo "Installing IJulia kernel for julia-hpc-sc26"
-    julia -e 'using IJulia; installkernel("julia-hpc-sc26", "--project=@.", env=Dict( "USER" => ENV["USER"], "PATH" => ENV["PATH"], "LD_LIBRARY_PATH" => ENV["LD_LIBRARY_PATH"], "JULIA_DEPOT_PATH" => ENV["JULIA_DEPOT_PATH"], "JULIA_NUM_THREADS" => "8"))'
+    julia -e 'using IJulia; installkernel("julia-hpc-sc26", "--project=@.", env=Dict( "USER" => ENV["USER"], "PATH" => ENV["PATH"], "LD_LIBRARY_PATH" => ENV["LD_LIBRARY_PATH"], "JULIA_DEPOT_PATH" => ENV["JULIA_DEPOT_PATH"], "JULIA_NUM_THREADS" => "16"))'
 fi
 
 # resulting kernel.json
