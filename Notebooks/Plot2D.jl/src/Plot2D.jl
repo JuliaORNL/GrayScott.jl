@@ -2,7 +2,11 @@ import ADIOS2
 import CairoMakie
 
 # This is NERSC specific path. Please change it to your own path
-bp_file = ENV["SCRATCH"]*"/"*ENV["USER"]*"/run001/gs-1MPI-1GPU-64L-F32-JACC-CUDA.bp"
+# bp_file = ENV["SCRATCH"]*"/"*ENV["USER"]*"/run001/gs-1MPI-1GPU-64L-F32-JACC-CUDA.bp"
+
+# This is Odo specific path. Please change it to your own path
+bp_file = "/gpfs/wolf2/olcf/trn047/scratch/"*ENV["USER"]*"/run001/gs-1MPI-1GPU-64L-F32-JACC-AMDGPU.bp"
+println("BP file: ", bp_file)
 
 adios = ADIOS2.adios_init_serial()
 io = ADIOS2.declare_io(adios, "reader")
@@ -11,11 +15,11 @@ reader = ADIOS2.open(io, bp_file, ADIOS2.mode_read)
 npixels = 32
 
 # Grid is 64x64x64. Use Tuples () for selection\n",
-start = (         16,       16,  32 )
-count = (   npixels,  npixels,  1 )
+start = (16, 16, 32)
+count = (npixels, npixels, 1)
 
-sliceU = Array{Float32, 2}(undef, npixels, npixels)
-sliceV = Array{Float32, 2}(undef, npixels, npixels)
+sliceU = Array{Float32,2}(undef, npixels, npixels)
+sliceV = Array{Float32,2}(undef, npixels, npixels)
 
 steps = ADIOS2.steps(reader)
 println("total steps: ", steps)
@@ -42,13 +46,13 @@ for step in 1:steps
 
     # Now plot
     if step % 10 == 0
-        println("Showing step", step )
+        println("Showing step", step)
         f = CairoMakie.Figure()
-        CairoMakie.heatmap(f[1,1], sliceU)
-        CairoMakie.heatmap(f[1,2], sliceV)
+        CairoMakie.heatmap(f[1, 1], sliceU)
+        CairoMakie.heatmap(f[1, 2], sliceV)
         display(f)
         # Save each step figure U,V pair in pdf format
-        CairoMakie.save(string("U_V_",step,".pdf"), f)
+        CairoMakie.save(string("U_V_", step, ".pdf"), f)
     end
 end
 
