@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH -A trn047
+#SBATCH -J gs-julia-1MPI-1GPU
+#SBATCH -o %x-%j.out
+#SBATCH -e %x-%j.err
+#SBATCH -t 0:01:00
+#SBATCH -N 1
+
+date
+#rocminfo
+
+GS_DIR=/gpfs/wolf2/olcf/trn047/scratch/$USER/GrayScott.jl
+GS_EXE=$GS_DIR/gray-scott.jl
+
+srun -n 1 --gpus=1 rocprof -i rocprof-input.txt -o profiling.csv julia --project=$GS_DIR $GS_EXE settings-file-odo.json
+
+# copy the rocprof-input.txt file to the current run directory
+# launch this file with sbatch `$ sbatch job_odo_rocprof.sh`
