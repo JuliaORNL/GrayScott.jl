@@ -10,7 +10,6 @@ JACC.@init_backend
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
 
-
 function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
     mcd = MPICartDomain()
 
@@ -95,8 +94,9 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     # ncenter_cells = maxL - minL + 1
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    JACC.@parallel_for range=(Lx, Ly, Lz) _init_fields_kernel!(u, v, offsets, sizes, minL, maxL)
-    
+    JACC.@parallel_for range=(Lx, Ly, Lz) _init_fields_kernel!(
+        u, v, offsets, sizes, minL, maxL)
+
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
 
     fields = Fields(u, v, u_temp, v_temp, xy_face_t, xz_face_t, yz_face_t)

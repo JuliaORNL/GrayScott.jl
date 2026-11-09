@@ -18,14 +18,13 @@ npixels = 32
 start = (16, 16, 32)
 count = (npixels, npixels, 1)
 
-sliceU = Array{Float32,2}(undef, npixels, npixels)
-sliceV = Array{Float32,2}(undef, npixels, npixels)
+sliceU = Array{Float32, 2}(undef, npixels, npixels)
+sliceV = Array{Float32, 2}(undef, npixels, npixels)
 
 steps = ADIOS2.steps(reader)
 println("total steps: ", steps)
 
 for step in 1:steps
-
     ADIOS2.begin_step(reader)
 
     # These U,V specific lines can be refactored into a function

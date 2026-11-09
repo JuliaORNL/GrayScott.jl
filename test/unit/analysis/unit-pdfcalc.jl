@@ -2,7 +2,7 @@
 import Test: @testset, @test, @test_throws
 
 include(joinpath(dirname(Base.active_project()), "src", "analysis",
-                 "pdfcalc.jl"))
+    "pdfcalc.jl"))
 
 @testset "unit-analysis.pdfcalc._parse_args" begin
     inputs = _parse_arguments(["foo.bp", "bar.bp", "1500"])

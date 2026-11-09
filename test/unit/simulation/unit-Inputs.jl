@@ -7,9 +7,9 @@ import GrayScott: Inputs
 
 @testset "unit-Inputs.get_settings" begin
     config_file = joinpath(dirname(Base.active_project()), "examples",
-                           "settings-files.json")
+        "settings-files.json")
     Inputs.get_settings([config_file], MPI.COMM_WORLD)
 
     @test_throws(ArgumentError,
-                 Inputs.get_settings(["hello.nojson"], MPI.COMM_WORLD))
+        Inputs.get_settings(["hello.nojson"], MPI.COMM_WORLD))
 end
