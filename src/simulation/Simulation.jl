@@ -6,6 +6,7 @@ import MPI
 import Distributions
 import JACC
 JACC.@init_backend
+import KernelAbstractions as KA
 
 # from parent module
 import ..Settings, ..MPICartDomain, ..Fields
@@ -33,7 +34,7 @@ function init_domain(settings::Settings, comm::MPI.Comm)::MPICartDomain
     # set proc local offsets
     for i in 1:3
         mcd.proc_offsets[i] = settings.L / mcd.dims[i] *
-                              mcd.coords[i]
+            mcd.coords[i]
         +min(settings.L % mcd.dims[i], mcd.coords[i])
     end
 
@@ -52,7 +53,7 @@ end
 Create and Initialize fields for either CPU, CUDA.jl, AMDGPU.jl JACC backends
 """
 function init_fields(settings::Settings, mcd::MPICartDomain,
-        T)::Fields{T, 3, <:JACC.array_type(){T, 3}}
+    T)::Fields{T,3,<:JACC.array_type(){T,3}}
     function _init_fields_kernel!(lx, ly, lz, u, v, offsets, sizes, minL, maxL)
 
         # get global coordinates
@@ -61,7 +62,7 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
         x = lx + offsets[1] - 1
 
         if z >= minL && z <= maxL && y >= minL && y <= maxL && x >= minL &&
-           x <= maxL
+            x <= maxL
 
             # check if global coordinates for initialization are inside the region
             if !_is_inside(x, y, z, offsets, sizes)
@@ -69,8 +70,8 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
             end
 
             # Julia is 1-index, like Fortran :)
-            u[lx + 1, ly + 1, lz + 1] = 0.25
-            v[lx + 1, ly + 1, lz + 1] = 0.33
+            u[lx+1, ly+1, lz+1] = 0.25
+            v[lx+1, ly+1, lz+1] = 0.33
         end
     end
     size_x = mcd.proc_sizes[1]
@@ -94,8 +95,7 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
     # ncenter_cells = maxL - minL + 1
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
 
-    JACC.@parallel_for range=(Lx, Ly, Lz) _init_fields_kernel!(
-        u, v, offsets, sizes, minL, maxL)
+    JACC.@parallel_for range=(Lx, Ly, Lz) _init_fields_kernel!(u, v, offsets, sizes, minL, maxL)
 
     xy_face_t, xz_face_t, yz_face_t = _get_mpi_faces(size_x, size_y, size_z, T)
 
@@ -104,8 +104,8 @@ function init_fields(settings::Settings, mcd::MPICartDomain,
 end
 
 function iterate!(
-        fields::Fields{T, N, <:JACC.array_type(){T, N}}, settings::Settings,
-        mcd::MPICartDomain) where {T, N}
+    fields::Fields{T,N,<:JACC.array_type(){T,N}}, settings::Settings,
+    mcd::MPICartDomain) where {T,N}
     _exchange!(fields, mcd)
     # this function is the bottleneck
     _calculate!(fields, settings, mcd)
@@ -139,14 +139,14 @@ function _exchange!(fields, mcd)
     """
     function _exchange_xy!(var, size_z, data_type, rank1, rank2, comm)
         # to north
-        send_buf = MPI.Buffer(@view(var[2, 1, size_z + 1]), 1, data_type)
+        send_buf = MPI.Buffer(@view(var[2, 1, size_z+1]), 1, data_type)
         recv_buf = MPI.Buffer(@view(var[2, 1, 1]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank1, source = rank2)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank1, source=rank2)
 
         # to south
         send_buf = MPI.Buffer(@view(var[2, 1, 2]), 1, data_type)
-        recv_buf = MPI.Buffer(@view(var[2, 1, size_z + 2]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank2, source = rank1)
+        recv_buf = MPI.Buffer(@view(var[2, 1, size_z+2]), 1, data_type)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank2, source=rank1)
     end
 
     """
@@ -154,14 +154,14 @@ function _exchange!(fields, mcd)
     """
     function _exchange_xz!(var, size_y, data_type, rank1, rank2, comm)
         # to up
-        send_buf = MPI.Buffer(@view(var[2, size_y + 1, 2]), 1, data_type)
+        send_buf = MPI.Buffer(@view(var[2, size_y+1, 2]), 1, data_type)
         recv_buf = MPI.Buffer(@view(var[2, 1, 2]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank1, source = rank2)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank1, source=rank2)
 
         # to down
         send_buf = MPI.Buffer(@view(var[2, 2, 2]), 1, data_type)
-        recv_buf = MPI.Buffer(@view(var[2, size_y + 2, 2]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank2, source = rank1)
+        recv_buf = MPI.Buffer(@view(var[2, size_y+2, 2]), 1, data_type)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank2, source=rank1)
     end
 
     """
@@ -169,14 +169,14 @@ function _exchange!(fields, mcd)
     """
     function _exchange_yz!(var, size_x, data_type, rank1, rank2, comm)
         # to east
-        send_buf = MPI.Buffer(@view(var[size_x + 1, 1, 1]), 1, data_type)
+        send_buf = MPI.Buffer(@view(var[size_x+1, 1, 1]), 1, data_type)
         recv_buf = MPI.Buffer(@view(var[1, 1, 1]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank1, source = rank2)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank1, source=rank2)
 
         # to west
         send_buf = MPI.Buffer(@view(var[2, 1, 1]), 1, data_type)
-        recv_buf = MPI.Buffer(@view(var[size_x + 2, 1, 1]), 1, data_type)
-        MPI.Sendrecv!(send_buf, recv_buf, comm, dest = rank2, source = rank1)
+        recv_buf = MPI.Buffer(@view(var[size_x+2, 1, 1]), 1, data_type)
+        MPI.Sendrecv!(send_buf, recv_buf, comm, dest=rank2, source=rank1)
     end
 
     # if already a CPU array, no need to copy, 
@@ -199,23 +199,24 @@ function _exchange!(fields, mcd)
     end
 end
 
-function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
-        settings::Settings, mcd::MPICartDomain) where {T, N}
-    function _calculate_kernel!(
-            i, j, k, u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
-            noise, dt)
+function _calculate!(fields::Fields{T,N,<:JACC.array_type(){T,N}},
+    settings::Settings, mcd::MPICartDomain) where {T,N}
+    KA.@kernel function _calculate_kernel!(
+        u, v, u_temp, v_temp, sizes, Du, Dv, F, K,
+        noise, dt)
+        i, j, k = KA.@index(Global, NTuple)
         if k >= 2 && k <= sizes[3] + 1 && j >= 2 && j <= sizes[2] + 1 &&
-           i >= 2 && i <= sizes[1] + 1
+            i >= 2 && i <= sizes[1] + 1
             # loop through non-ghost cells
             u_ijk = u[i, j, k]
             v_ijk = v[i, j, k]
 
             du = Du * _laplacian(i, j, k, u) - u_ijk * v_ijk^2 +
-                 F * (1.0 - u_ijk) +
-                 noise * rand(Distributions.Uniform(-1, 1))
+                F * (1.0 - u_ijk) +
+                noise * rand(Distributions.Uniform(-1, 1))
 
             dv = Dv * _laplacian(i, j, k, v) + u_ijk * v_ijk^2 -
-                 (F + K) * v_ijk
+                (F + K) * v_ijk
 
             # advance the next step
             u_temp[i, j, k] = u_ijk + du * dt
@@ -234,9 +235,12 @@ function _calculate!(fields::Fields{T, N, <:JACC.array_type(){T, N}},
     Lx, Ly, Lz = mcd.proc_sizes[1], mcd.proc_sizes[2], mcd.proc_sizes[3]
     sizes = JACC.array(mcd.proc_sizes)
 
-    JACC.@parallel_for range=(Lx + 2, Ly + 2, Lz + 2) _calculate_kernel!(
+    backend = JACC.default_backend()
+    _calculate_kernel!(backend)(
         fields.u, fields.v, fields.u_temp, fields.v_temp,
-        sizes, Du, Dv, F, K, noise, dt)
+        sizes, Du, Dv, F, K, noise, dt;
+        ndrange=(Lx + 2, Ly + 2, Lz + 2))
+    KA.synchronize(backend)
 end
 
 """
@@ -262,21 +266,21 @@ end
    this is equally a host and a device function!
 """
 function _laplacian(i, j, k, var)
-    @inbounds l = var[i - 1, j, k] + var[i + 1, j, k] + var[i, j - 1, k] +
-                  var[i, j + 1, k] + var[i, j, k - 1] + var[i, j, k + 1] -
-                  6.0 * var[i, j, k]
+    @inbounds l = var[i-1, j, k] + var[i+1, j, k] + var[i, j-1, k] +
+        var[i, j+1, k] + var[i, j, k-1] + var[i, j, k+1] -
+        6.0 * var[i, j, k]
     return l / 6.0
 end
 
 function get_fields(fields::Fields{
-        T, N, <:JACC.array_type(){T, N}}) where {T, N}
+    T,N,<:JACC.array_type(){T,N}}) where {T,N}
     u = Array(fields.u)
-    u_no_ghost = u[(begin + 1):(end - 1), (begin + 1):(end - 1),
-        (begin + 1):(end - 1)]
+    u_no_ghost = u[(begin+1):(end-1), (begin+1):(end-1),
+        (begin+1):(end-1)]
 
     v = Array(fields.v)
-    v_no_ghost = v[(begin + 1):(end - 1), (begin + 1):(end - 1),
-        (begin + 1):(end - 1)]
+    v_no_ghost = v[(begin+1):(end-1), (begin+1):(end-1),
+        (begin+1):(end-1)]
     return u_no_ghost, v_no_ghost
 end
 
