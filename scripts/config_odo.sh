@@ -14,6 +14,7 @@ module purge
 ROCM_VERSION=7.2.0
 
 # load required modules
+module load cpe/25.03
 module load PrgEnv-cray/8.6.0
 module load cray-mpich
 module load rocm/$ROCM_VERSION
