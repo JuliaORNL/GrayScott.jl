@@ -1,0 +1,44 @@
+#!/bin/bash
+
+SUB_USER=wgodoy 
+PROJ_DIR=/gpfs/wolf2/olcf/trn047/scratch/$USER/sc26/$SUB_USER
+export JULIA_DEPOT_PATH=$PROJ_DIR/.julia-gray-scott
+GS_DIR=$PROJ_DIR/GrayScott.jl
+
+# remove existing generated Manifest.toml
+rm -f $GS_DIR/Manifest.toml
+rm -f $GS_DIR/LocalPreferences.toml
+
+# good practice to avoid conflicts with existing default modules
+module purge
+
+ROCM_VERSION=7.2.0
+
+# load required modules
+module load cpe/25.03
+module load PrgEnv-cray/8.6.0
+module load cray-mpich
+module load rocm/$ROCM_VERSION
+module load adios2/2.10.2-mpi
+module load julia/1.13.1
+
+# AMDGPU.jl requires rocm system libraries (default = /opt/rocm)
+export ROCM_PATH=/opt/rocm-$ROCM_VERSION
+
+# Required to point at underlying modules above
+export JULIA_ADIOS2_PATH=$OLCF_ADIOS2_ROOT
+
+# DOWNLOAD JULIA PACKAGES
+julia --project=$GS_DIR -e 'using Pkg; Pkg.instantiate()'
+
+# Set MPIPreferences to use Cray's MPICH in LocalPreferences.toml
+julia --project=$GS_DIR -e 'using MPIPreferences; MPIPreferences.use_system_binary(mpiexec="srun", vendor="cray")'
+
+# Set JACC AMDGPU back end in LocalPreferences.toml. 
+# It will add AMDGPU to Project.toml
+julia --project=$GS_DIR -e 'using JACC; JACC.set_backend("AMDGPU")'
+
+# Verify the packages are installed correctly
+ julia --project=$GS_DIR -e 'using Pkg; Pkg.build()'
+ # Precompile dependencies
+ julia --project=$GS_DIR -e 'using Pkg; Pkg.precompile()'
